@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interop Openflow Lab</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <script type="text/javascript" src="js/d3.v2.min.js"></script>
+    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tipsy.js"></script>
+    <script type="text/javascript" src="fancybox/jquery.fancybox-1.3.4.pack.js"></script>
+    <script type="text/javascript" src="js/fv_visualizer.js"></script>
+    <link href="css/tipsy.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="fancybox/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
+    <link href="css/demo.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div class="graphs">
+      <div>
+           <div id="paper1" class="paper">
+            <div class=label>BGP in an SDN world</div>
+            <div id=BGP width=1000 height=1000></div>
+          </div>
+      </div>
+        
+    </div>
+    <div class="panel">
+      <div class="button">
+        <button id=button2 class="metal linear" onclick="reset();">Reset</button>
+      </div>
+    </div>
+    <script type="text/javascript">
+    start_demo("http://45.0.88.7:8000/slice/d1abd271-8125-4a94-9ad0-56566e27ef10", "#IBM");
+     start_demo("http://45.0.88.7:8000/slice/9e1d41f2-f00d-4689-9cb8-651d0718e95b", "#BSN");
+     start_demo("http://45.0.88.7:8000/slice/c504f980-57c6-4b0b-a54e-8a65a8d3fa00", "#NEC");
+     start_demo("http://45.0.88.7:8000/slice/full", "#full");
+
+    </script>
+  </body>
+</html>
