@@ -20,7 +20,7 @@ parser.add_argument('-v', '--verbose', action="store_true", help="debug output",
 parser.add_argument('-s', '--simple', action="store_true", help="Send bare essentials to D3", default=False)
 parser.add_argument('-p', '--httpport', type=int, help="http server port", default=8000)
 parser.add_argument('-t', '--httphost', help='host on which the http server runs', default='localhost')
-parser.add_argument('servers', help="list of floodlights with format SRV:PORT", nargs=argparse.REMAINDER)
+parser.add_argument('servers', help="list of floodlights with format SRV:PORT",nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
 for s in args.servers:

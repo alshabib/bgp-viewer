@@ -42,13 +42,7 @@ function start_demo(data_source, tag) {
 
     var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
-
-    var force = d3.layout.force()
-    .gravity(0)
-    .linkDistance(10)
-    .linkStrength(0)
-    .charge(0)
-    .size([w, h])
+    var fill = d3.scale.category10();
 
 
     var svg = d3.select(tag).append("svg:svg")
@@ -70,6 +64,43 @@ function start_demo(data_source, tag) {
     setTimeout("setTipsy(\'"+tag+"\')", 3000); 
  
     function draw(json) {
+
+      var nodes = json.nodes.map(Object);
+    
+      var groups = d3.nest().key(function(d) { return d.group; }).entries(nodes);
+
+      var groupPath = function(d) {
+        return "M" + 
+        d3.geom.hull(d.values.map(function(i) { 
+                if (i.name.indexOf("a1") != -1) {
+                    return [i.x, i.y ];
+                }
+                if (i.name.indexOf("a2") != -1) {
+                    return [i.x, i.y + image_size];
+                }
+                if (i.name.indexOf("b4") != -1) {
+                    return [i.x + image_size, i.y ];
+                }
+                 if (i.name.indexOf("b5") != -1) {
+                    return [i.x + image_size, i.y + image_size ];
+                }
+                return [i.x + image_size/2, i.y + image_size / 2]; }))
+            .join("L")
+        + "Z";
+    };
+
+    var groupFill = function(d, i) { return fill(i & 3); };
+    
+          var force = d3.layout.force()
+                .gravity(0)
+                .linkDistance(10)
+                .linkStrength(0)
+                .charge(0)
+                .size([w, h])
+                .nodes(nodes)
+                .links(json.links).start()
+
+
     
       var link = svg.selectAll("line")
           .data(json.links)
@@ -79,31 +110,48 @@ function start_demo(data_source, tag) {
           .attr("id", function(d){return d.id;});
 
       var node = svg.selectAll("g.node")
-          .data(json.nodes)
+          .data(nodes)
         .enter().append("svg:g")
           .attr("class", "node")
-          .call(force.drag);
-
-      node.append("svg:image")
+         .append("svg:image")
           .attr("xlink:href", function(d) {if (d.name.indexOf("AS") != -1) { return "images/cloud.png"; } else { return  "images/router.png"; } } )
           .attr("width", image_size + "px")
           .attr("height", image_size + "px")
-          .attr("id", function(d){return d.name;});
+          .attr("id", function(d){return d.name;})
+        .call(force.drag);
 
+
+    
+
+
+    svg.style("opacity", 1e-6)
+  .transition()
+    .duration(1000)
+    .style("opacity", 1);
 
       force
-        .nodes(json.nodes)
-        .links(json.links)
-        .on("tick", tick).start();
-    
-      function tick(e) {
+        .on("tick", function(e) {
+
+
         node.attr("transform", function(d) {return returnToPosition(d, e);});
 
         link.attr("x1", function(d) { return d.source.x+image_size/2; })
             .attr("y1", function(d) { return d.source.y+image_size/2; })
             .attr("x2", function(d) { return d.target.x+image_size/2; })
             .attr("y2", function(d) { return d.target.y+image_size/2; });
-      }
+
+        svg.selectAll("path").data(groups)
+            .attr("d", groupPath)
+           .enter().insert("path", "g")
+            .style("fill", groupFill)
+            .style("stroke", groupFill)
+            .style("stroke-width", 40)
+            .style("stroke-linejoin", "round")
+            .style("opacity", .2)
+            .attr("d", groupPath);
+ 
+ 
+      });
       
       function returnToPosition(d, e){
         var x=0, y=0;
