@@ -4,7 +4,6 @@ import argparse
 import json, sys, threading, os
 import urllib2
 import SimpleHTTPServer, SocketServer
-import data
 
 FL_TOPO = "/wm/topology/links/json"
 FL_SWS = "/wm/core/controller/switches/json"
