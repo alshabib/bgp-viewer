@@ -117,6 +117,7 @@ def findFlowPaths(flows, thash):
         for fe in flowEntries:
             path = []
             path.append(dpid)
+            port = -1
             for f in fe['actions']:
                 if f['type'] == 'OUTPUT':
                     port = f['port']

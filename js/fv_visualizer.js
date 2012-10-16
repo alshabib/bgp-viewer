@@ -173,23 +173,23 @@ function start_demo(data_source, flow_source, tag) {
         
 
         for (var i = 0 ; i < paths.length ; i++) {
-            path = paths[i]
-            var flowpath = d3.svg.line()
+          p = paths[i]
+          var flowpath = d3.svg.line()
                         .x(function(d){return d.x;})
                         .y(function(d){return d.y;})
                         .interpolate("linear");
 
           var path = svg.append("svg:path")
-            .attr("d", flowpath(laypath(path)))
+            .attr("d", flowpath(laypath(p)))
             .style("stroke-width", 0)
             .style("fill", "none");    
 
 
-            var packet = svg.append("circle")
+          var packet = svg.append("circle")
                 .attr("r", 10)
                 .style("opacity",0.8)
                 .style("fill", packetFill(i))
-                .transition().duration(4000)
+                .transition().duration(4000).delay(i*250)
                 .attrTween("transform", translateAlong(path.node()))
                 .each("end", function() { 
                             d3.select(this).remove();
@@ -214,7 +214,7 @@ function start_demo(data_source, flow_source, tag) {
      }, 2000); 
 
 
-    var packetFill = function(i) { return fill(i & 5); };   
+    var packetFill = function(i) { return pfill(i % 20); };   
      
       function returnToPosition(d, e){
         var x=0, y=0;
