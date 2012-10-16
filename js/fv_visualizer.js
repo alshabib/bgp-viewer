@@ -38,7 +38,7 @@ function setRegularLayout(){
 
 var layout = setRegularLayout();
 
-function start_demo(data_source, tag) {
+function start_demo(data_source, flow_source, tag) {
 
     var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
@@ -205,7 +205,7 @@ function start_demo(data_source, tag) {
 
      setInterval(function() {
         $.ajax({
-            url: "http://localhost:8000/flows",
+            url: flow_source,
             success: function(data) {
                showFlows(data)
            },
