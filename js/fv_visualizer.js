@@ -214,7 +214,7 @@ function start_demo(data_source, flow_source, tag) {
      }, 2000); 
 
 
-    var packetFill = function(i) { return fill(i & 7); };   
+    var packetFill = function(i) { return fill(i & 5); };   
      
       function returnToPosition(d, e){
         var x=0, y=0;
