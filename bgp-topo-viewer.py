@@ -4,10 +4,11 @@ import argparse
 import json, sys, threading, os
 import urllib2
 import SimpleHTTPServer, SocketServer
-
+import data
 
 FL_TOPO = "/wm/topology/links/json"
 FL_SWS = "/wm/core/controller/switches/json"
+FL_FLOWS= "/wm/core/switch/all/flow/json"
 
 NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
 
@@ -32,6 +33,13 @@ for s in args.servers:
 def debug(msg):
     if args.verbose:
         print msg
+
+def isTraffic(flows):
+    for dpid,fes in flows.items():
+        if len(fes) > 0:
+            return True
+
+    return False
 
 def do_url(url):
     request = urllib2.Request(url, None, {'Content-Type':'application/json'})
@@ -65,16 +73,76 @@ def d3ize(sws, topo):
         pass
         # send all info you got
     debug(json.dumps(d3_dict, indent=2))
-    return d3_dict
+    return (node_index, d3_dict)
 
 
+def buildTopoHash(topo):
+    thash = {}
+    for conn in topo:
+        if conn['src-switch'] not in thash:
+            thash[conn['src-switch']] = {}
+        thash[conn['src-switch']][conn['src-port']] = ( conn['dst-switch'] , conn['dst-port'] )
+
+        if conn['dst-switch'] not in thash:
+            thash[conn['dst-switch']] = {}
+        thash[conn['dst-switch']][conn['dst-port']] = ( conn['src-switch'] , conn['src-port'] )
+
+
+    debug(thash)
+    return thash
+        
+def determineSourceFlows(flows, thash):
+    srcs = {}
+    for dpid, flowEntries in flows.items():
+         entries = []
+         for fe in flowEntries:
+             try:
+                 thash[dpid][fe['match']['inputPort']]
+             except KeyError as e:
+                 entries.append(fe)
+         srcs[dpid] = entries
+    return srcs
+
+def findNextHop(flows, nextHop, inport):
+    for fe in flows[nextHop]:
+         if fe['match']['inputPort'] == inport:
+             for f in fe['actions']:
+                 if f['type'] == 'OUTPUT':
+                     return (nextHop, f['port']) 
+
+def findFlowPaths(flows, thash):
+    sources = determineSourceFlows(flows, thash)
+    paths = []
+    for dpid, flowEntries in sources.items():
+        for fe in flowEntries:
+            path = []
+            path.append(dpid)
+            for f in fe['actions']:
+                if f['type'] == 'OUTPUT':
+                    port = f['port']
+                else:
+                    continue
+            dp = dpid
+            while True:
+                try:
+                    (nextHop,inport) = thash[dp][port] 
+                except KeyError as e:
+                    break
+                path.append(nextHop)
+                (dp, port) = findNextHop(flows, nextHop, inport)
+            paths.append(path)
+    debug("Paths found %s" % paths)
+    return paths
+    
 class TopoFetcher():
     def __init__(self, args):
         self.servers = args.servers
         self.debug = args.verbose
         HTTPHandler.topo = self.getTopo
         self.cv = threading.Condition()
+        self.fcv = threading.Condition()
         self.fetch_topology() 
+        self.fetch_flows()
         self.httpd = TCPServer((args.httphost, args.httpport), HTTPHandler)
         try:
             debug("Firing up HTTP server, now serving forever on host %s and port %s" \
@@ -97,14 +165,37 @@ class TopoFetcher():
             topo = topo + do_url(url)
             url = "http://%s%s" % (server, FL_SWS)
             debug("Fetching devices info from %s" % url)
-            sws.append(do_url(url))   
+            sws.append(do_url(url))
         if (len(topo) > 0 and len(sws) > 0):
             self.cv.acquire()
             self.d3_dict = None
-            self.d3_dict = d3ize(sws, topo)
+            (self.node_index, self.d3_dict) = d3ize(sws, topo)
             self.cv.notify()
             self.cv.release()
-    
+
+    def fetch_flows(self):
+        topo = []
+        fls = []
+        self.flow_paths = None
+        for server in self.servers:
+            url = "http://%s%s" % (server, FL_TOPO)
+            topo = topo + do_url(url)
+            url = "http://%s%s" % (server, FL_FLOWS)
+            fls.append(do_url(url))
+        flows = dict(fls.pop(0),**fls.pop(0))
+        for fl in fls:
+            flows = dict(flows, **fl)     
+        
+        if len(topo) > 0 and isTraffic(flows) > 0:
+            self.fcv.acquire()
+            self.flow_paths = None
+            fls = []
+            for flow in findFlowPaths(flows, buildTopoHash(topo)):
+                fls.append(map(lambda x: self.node_index.index(x), flow))
+            self.flow_paths = fls  
+            self.fcv.notify()
+            self.fcv.release()
+
     def getTopology(self):
         self.cv.acquire()
         while self.d3_dict == None:
@@ -120,6 +211,14 @@ class TopoFetcher():
         sws = self.d3_dict['nodes']
         self.cv.release()
         return sws
+    
+    def getFlows(self):
+        self.fcv.acquire()
+        while self.flow_paths == None:
+            self.fcv.wait()
+        flows = self.flow_paths
+        self.fcv.release()
+        return flows
 
 
 class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -138,6 +237,14 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 self.send_resp(resp)
             else:
                 self.send_response(404)
+            return
+        if self.path.startswith("/flows"):
+            resp = self.topo().getFlows()
+            debug("Sending flow paths to d3 : %s" % resp)
+            if resp != None:
+                self.send_resp(resp)
+            else:
+                self.send_reponse(404)
             return
         if self.path.startswith("/listdevices"):
             self.send_resp(self.topo().getDevices())

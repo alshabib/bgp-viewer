@@ -17,7 +17,7 @@ function reset() {
 }
 
 function setRegularLayout(){
-  layout = {}
+  var layout = {};
   layout['00:00:00:00:00:00:00:a1'] = [1/10, 1/4];
   layout['00:00:00:00:00:00:00:a2'] = [1/10, 3/4];
   layout['00:00:00:00:00:00:00:a3'] = [2/10, 2/4];
@@ -36,14 +36,14 @@ function setRegularLayout(){
   return layout;
 }
 
-layout = setRegularLayout();
+var layout = setRegularLayout();
 
 function start_demo(data_source, tag) {
 
     var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
     var fill = d3.scale.category10();
-
+    var pfill = d3.scale.category20b();
 
     var svg = d3.select(tag).append("svg:svg")
         .attr("width", w)
@@ -51,16 +51,6 @@ function start_demo(data_source, tag) {
 
     d3.json(data_source, draw);
     
-/*    setInterval(function() {
-        $.ajax({
-            url: data_source,
-            success: function(data) {
-               update(data)
-           },
-            dataType: "json"
-        });
-     }, 2000); */
-   
     setTimeout("setTipsy(\'"+tag+"\')", 3000); 
  
     function draw(json) {
@@ -149,10 +139,83 @@ function start_demo(data_source, tag) {
             .style("stroke-linejoin", "round")
             .style("opacity", .2)
             .attr("d", groupPath);
+    
  
  
       });
-      
+
+
+
+     function transitionPacket(path) {
+     }
+
+
+
+      function showFlows(paths) {
+        
+        function laypath(info) {
+            var arr = []
+            for ( var i = 0; i < info.length ; i++) {
+                arr.push({ 'x' : nodes[info[i]].x+image_size/2, 'y' : nodes[info[i]].y +image_size/2});
+            }
+            return arr;
+        }
+
+        function translateAlong(path) {
+            var l = path.getTotalLength();
+                return function(d, i, a) {
+                    return function(t) {
+                        var p = path.getPointAtLength(t * l);
+                            return "translate(" + p.x + "," + p.y + ")";
+                    };
+                };
+        }
+        
+
+        for (var i = 0 ; i < paths.length ; i++) {
+            path = paths[i]
+            var flowpath = d3.svg.line()
+                        .x(function(d){return d.x;})
+                        .y(function(d){return d.y;})
+                        .interpolate("linear");
+
+          var path = svg.append("svg:path")
+            .attr("d", flowpath(laypath(path)))
+            .style("stroke-width", 0)
+            .style("fill", "none");    
+
+
+            var packet = svg.append("circle")
+                .attr("r", 10)
+                .style("opacity",0.8)
+                .style("fill", packetFill(i))
+                .transition().duration(4000)
+                .attrTween("transform", translateAlong(path.node()))
+                .each("end", function() { 
+                            d3.select(this).remove();
+                });
+
+            
+
+        }
+    
+
+      }
+
+
+     setInterval(function() {
+        $.ajax({
+            url: "http://localhost:8000/flows",
+            success: function(data) {
+               showFlows(data)
+           },
+            dataType: "json"
+        });
+     }, 2000); 
+
+
+    var packetFill = function(i) { return fill(i & 7); };   
+     
       function returnToPosition(d, e){
         var x=0, y=0;
         var damper = 1;
