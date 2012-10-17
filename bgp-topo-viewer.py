@@ -46,8 +46,8 @@ def do_url(url):
         response = urllib2.urlopen(request)
         resp_text =  response.read()
     except Exception as e:
-        print "Exception:", e
-        return []
+        print "Exception on url %s" % url, e
+        sys.exit(1)  
     return json.loads(resp_text)
 
 def d3ize(sws, topo):
@@ -62,10 +62,10 @@ def d3ize(sws, topo):
         debug(node_index)
         links = [ { "source" : node_index.index(link["src-switch"]), "target" : node_index.index(link["dst-switch"]) } for link in topo ]
         links.append({"source" : node_index.index("00:00:00:00:00:00:00:a4"), "target" : node_index.index("AS1") })
-        links.append({"target" : node_index.index("00:00:00:00:00:00:00:b1"), "source" : node_index.index("AS1") })
+        links.append({"target" : node_index.index("00:00:00:00:00:00:00:b4"), "source" : node_index.index("AS1") })
         links.append({"source" : node_index.index("00:00:00:00:00:00:00:a5"), "target" : node_index.index("AS2") })
         links.append({"source" : node_index.index("AS2"), "target" : node_index.index("AS3") })
-        links.append({"source" : node_index.index("AS3"), "target" : node_index.index("00:00:00:00:00:00:00:b2") })
+        links.append({"source" : node_index.index("AS3"), "target" : node_index.index("00:00:00:00:00:00:00:b5") })
 
         d3_dict["links"] = links     
     else:

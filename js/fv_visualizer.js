@@ -28,11 +28,11 @@ function setRegularLayout(){
   layout['AS2'] = [4/10, 3/4];
   layout['AS3'] = [6/10, 3/4];
 
-  layout['00:00:00:00:00:00:00:b1'] = [7/10, 1/4];
-  layout['00:00:00:00:00:00:00:b2'] = [7/10, 3/4];
+  layout['00:00:00:00:00:00:00:b1'] = [9/10, 1/4];
+  layout['00:00:00:00:00:00:00:b2'] = [9/10, 3/4];
   layout['00:00:00:00:00:00:00:b3'] = [8/10, 2/4];
-  layout['00:00:00:00:00:00:00:b4'] = [9/10, 1/4];
-  layout['00:00:00:00:00:00:00:b5'] = [9/10, 3/4];
+  layout['00:00:00:00:00:00:00:b4'] = [7/10, 1/4];
+  layout['00:00:00:00:00:00:00:b5'] = [7/10, 3/4];
   return layout;
 }
 
@@ -68,10 +68,10 @@ function start_demo(data_source, flow_source, tag) {
                 if (i.name.indexOf("a2") != -1) {
                     return [i.x, i.y + image_size];
                 }
-                if (i.name.indexOf("b4") != -1) {
+                if (i.name.indexOf("b1") != -1) {
                     return [i.x + image_size, i.y ];
                 }
-                 if (i.name.indexOf("b5") != -1) {
+                 if (i.name.indexOf("b2") != -1) {
                     return [i.x + image_size, i.y + image_size ];
                 }
                 return [i.x + image_size/2, i.y + image_size / 2]; }))
@@ -146,12 +146,10 @@ function start_demo(data_source, flow_source, tag) {
 
 
 
-     function transitionPacket(path) {
-     }
-
 
 
       function showFlows(paths) {
+        var list = [0,1,2,3,4,5];
         
         function laypath(info) {
             var arr = []
@@ -185,15 +183,19 @@ function start_demo(data_source, flow_source, tag) {
             .style("fill", "none");    
 
 
-          var packet = svg.append("circle")
-                .attr("r", 10)
+
+          for (var j = 0 ; j < 10 ; j++) {
+            var packet = svg.append("rect")
+                .attr("height", 5)
+                .attr("width", 10)
                 .style("opacity",0.8)
                 .style("fill", packetFill(i))
-                .transition().duration(4000).delay(i*250)
+                .transition().duration(5000).delay((i*750)+(j*75)).ease("linear")
                 .attrTween("transform", translateAlong(path.node()))
                 .each("end", function() { 
                             d3.select(this).remove();
                 });
+          }  
 
             
 
