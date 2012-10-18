@@ -226,11 +226,11 @@ class TopoFetcher():
             flows = dict(flows, **fl)     
         debug("Obtained flow info")
         if len(topo) > 0 and isTraffic(flows) > 0:
-            self.fcv.acquire()
-            self.flow_paths = None
             fls = []
             for flow in findFlowPaths(flows, buildTopoHash(topo)):
                 fls.append(map(lambda x: self.node_index.index(x), flow))
+            self.fcv.acquire()
+            self.flow_paths = None
             self.flow_paths = fls  
             self.fcv.notify()
             self.fcv.release()
