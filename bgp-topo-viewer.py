@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 import argparse
-import json, sys, threading, os
+import json, sys, threading, os, time
 import urllib2
 import SimpleHTTPServer, SocketServer
 
@@ -11,6 +11,8 @@ FL_FLOWS= "/wm/core/switch/all/flow/json"
 
 NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
 
+NON_OF_FLOW = {"00:00:00:00:00:00:00:a4:2" : (["AS1"],'00:00:00:00:00:00:00:b4',2), "00:00:00:00:00:00:00:a5:2" : (["AS2", "AS3"],'00:00:00:00:00:00:00:b5',2), \
+                "00:00:00:00:00:00:00:b4:2" : (["AS1"],'00:00:00:00:00:00:00:a4',2), "00:00:00:00:00:00:00:b5:2" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a5',2)}
 
 DESC = "Collects topology and other information from Floodlight and exposes it over a webserver"
 
@@ -20,6 +22,7 @@ parser.add_argument('-v', '--verbose', action="store_true", help="debug output",
 parser.add_argument('-s', '--simple', action="store_true", help="Send bare essentials to D3", default=False)
 parser.add_argument('-p', '--httpport', type=int, help="http server port", default=8000)
 parser.add_argument('-t', '--httphost', help='host on which the http server runs', default='localhost')
+parser.add_argument('-u', '--update', type=int, help='Interval to update flows', default='2')
 parser.add_argument('servers', help="list of floodlights with format SRV:PORT",nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
@@ -28,6 +31,22 @@ for s in args.servers:
         print "Server list must be supplied in the SRV:PORT format"
         parser.print_help()
         sys.exit(0)
+
+
+def flatten(l, ltypes=(list, tuple)):
+    ltype = type(l)
+    l = list(l)
+    i = 0
+    while i < len(l):
+        while isinstance(l[i], ltypes):
+            if not l[i]:
+                l.pop(i)
+                i -= 1
+                break
+            else:
+                l[i:i + 1] = l[i]
+        i += 1
+    return ltype(l)
 
 def debug(msg):
     if args.verbose:
@@ -108,6 +127,7 @@ def findNextHop(flows, nextHop, inport):
              for f in fe['actions']:
                  if f['type'] == 'OUTPUT':
                      return (nextHop, f['port']) 
+    return (None, None)
 
 def findFlowPaths(flows, thash):
     sources = determineSourceFlows(flows, thash)
@@ -124,12 +144,20 @@ def findFlowPaths(flows, thash):
                     continue
             dp = dpid
             while True:
+                if NON_OF_FLOW.has_key("%s:%s" % (dp, port)):
+                   (ases, dp, port) = NON_OF_FLOW['%s:%s' % (dp,port)]
+                   path.append(ases)
+                   path.append(dp)
+                   path = flatten(path)
+                   (dp,port) = findNextHop(flows, dp, port)
+
                 try:
                     (nextHop,inport) = thash[dp][port] 
                 except KeyError as e:
                     break
                 path.append(nextHop)
                 (dp, port) = findNextHop(flows, nextHop, inport)
+                   
             paths.append(path)
     debug("Paths found %s" % paths)
     return paths
@@ -141,20 +169,31 @@ class TopoFetcher():
         HTTPHandler.topo = self.getTopo
         self.cv = threading.Condition()
         self.fcv = threading.Condition()
+        self.flowupdateEvent = threading.Event()
+        self.flowupdate = threading.Thread(target=self.update_flows)
         self.fetch_topology() 
         self.fetch_flows()
         self.httpd = TCPServer((args.httphost, args.httpport), HTTPHandler)
         try:
+            debug("Starting flow update thread")
+            self.flowupdate.start()
             debug("Firing up HTTP server, now serving forever on host %s and port %s" \
                                         % (args.httphost,args.httpport) )
             self.httpd.serve_forever()
         except KeyboardInterrupt:
-            debug("Shutdown http server") 
+            debug("Stopping flow update thread")
+            self.flowupdateEvent.set()
+            debug("Shutdown http server")
     
     def getTopo(self):
         debug("Pointing webserver topo to Topo class")
         return self
 
+
+    def update_flows(self):
+        while not self.flowupdateEvent.is_set():
+            self.fetch_flows()
+            time.sleep(args.update)
 
     def fetch_topology(self):
         topo = []
@@ -185,7 +224,7 @@ class TopoFetcher():
         flows = dict(fls.pop(0),**fls.pop(0))
         for fl in fls:
             flows = dict(flows, **fl)     
-        
+        debug("Obtained flow info")
         if len(topo) > 0 and isTraffic(flows) > 0:
             self.fcv.acquire()
             self.flow_paths = None
