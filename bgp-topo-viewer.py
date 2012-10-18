@@ -78,7 +78,6 @@ def d3ize(sws, topo):
             nodes = nodes + [ { "group" : group, "name" : sw['dpid'] } for sw in sws[group] ]
             node_index = node_index + [ sw['dpid'] for sw in sws[group] ] 
         d3_dict['nodes'] = nodes
-        debug(node_index)
         links = [ { "source" : node_index.index(link["src-switch"]), "target" : node_index.index(link["dst-switch"]) } for link in topo ]
         links.append({"source" : node_index.index("00:00:00:00:00:00:00:a4"), "target" : node_index.index("AS1") })
         links.append({"target" : node_index.index("00:00:00:00:00:00:00:b4"), "source" : node_index.index("AS1") })
@@ -90,7 +89,6 @@ def d3ize(sws, topo):
     else:
         pass
         # send all info you got
-    debug(json.dumps(d3_dict, indent=2))
     return (node_index, d3_dict)
 
 
@@ -106,7 +104,6 @@ def buildTopoHash(topo):
         thash[conn['dst-switch']][conn['dst-port']] = ( conn['src-switch'] , conn['src-port'] )
 
 
-    debug(thash)
     return thash
         
 def determineSourceFlows(flows, thash):
@@ -159,7 +156,6 @@ def findFlowPaths(flows, thash):
                 (dp, port) = findNextHop(flows, nextHop, inport)
                    
             paths.append(path)
-    debug("Paths found %s" % paths)
     return paths
     
 class TopoFetcher():
@@ -186,7 +182,6 @@ class TopoFetcher():
             debug("Shutdown http server")
     
     def getTopo(self):
-        debug("Pointing webserver topo to Topo class")
         return self
 
 
@@ -215,7 +210,6 @@ class TopoFetcher():
     def fetch_flows(self):
         topo = []
         fls = []
-        self.flow_paths = None
         for server in self.servers:
             url = "http://%s%s" % (server, FL_TOPO)
             topo = topo + do_url(url)
@@ -254,6 +248,7 @@ class TopoFetcher():
     def getFlows(self):
         self.fcv.acquire()
         while self.flow_paths == None:
+            debug("Waiting....")
             self.fcv.wait()
         flows = self.flow_paths
         self.fcv.release()
@@ -271,7 +266,6 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/topology"):
             resp = self.topo().getTopology()
-            debug("Sending to d3: %s" % resp)
             if resp != None:
                 self.send_resp(resp)
             else:
@@ -298,7 +292,7 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 
-class TCPServer(SocketServer.TCPServer):
+class TCPServer(SocketServer.ThreadingTCPServer):
     allow_reuse_address = True
 
 
