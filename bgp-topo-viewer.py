@@ -7,7 +7,8 @@ import SimpleHTTPServer, SocketServer
 
 FL_TOPO = "/wm/topology/links/json"
 FL_SWS = "/wm/core/controller/switches/json"
-FL_FLOWS= "/wm/core/switch/all/flow/json"
+FL_FLOWS = "/wm/core/switch/all/flow/json"
+FL_BGP = "/wm/bgp/json"
 
 NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
 
@@ -210,11 +211,14 @@ class TopoFetcher():
     def fetch_flows(self):
         topo = []
         fls = []
+        bgps = []
         for server in self.servers:
             url = "http://%s%s" % (server, FL_TOPO)
             topo = topo + do_url(url)
             url = "http://%s%s" % (server, FL_FLOWS)
             fls.append(do_url(url))
+            url = "http://%s%s" % (server, FL_BGP)
+            bgps.append(do_url(url))
         flows = dict(fls.pop(0),**fls.pop(0))
         for fl in fls:
             flows = dict(flows, **fl)     
@@ -225,7 +229,9 @@ class TopoFetcher():
                 fls.append(map(lambda x: self.node_index.index(x), flow))
             self.fcv.acquire()
             self.flow_paths = None
-            self.flow_paths = fls  
+            self.bgps = None
+            self.flow_paths = fls
+            self.bgps = bgps  
             self.fcv.notify()
             self.fcv.release()
 
@@ -248,11 +254,20 @@ class TopoFetcher():
     def getFlows(self):
         self.fcv.acquire()
         while self.flow_paths == None:
-            debug("Waiting....")
+            debug("Waiting for flows")
             self.fcv.wait()
         flows = self.flow_paths
         self.fcv.release()
         return flows
+
+    def getBGP(self, bgp):
+        self.fcv.acquire()
+        while self.bgps == None:
+            debug("Waiting for flows")
+            self.fcv.wait()
+        bgps = self.bgps
+        self.fcv.release()
+        return bgps[bgp]
 
 
 class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -279,9 +294,25 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             else:
                 self.send_reponse(404)
             return
+        if self.path.startswith("/bgp1"):
+            resp = self.topo().getBGP(0)
+            debug("Sending BGP1 info -> %s" % resp)
+            if resp != None:
+                self.send_resp(resp)
+            else:
+                self.send_reponse(404)
+            return
+        if self.path.startswith("/bgp2"):
+            resp = self.topo().getBGP(1)
+            if resp != None:
+                self.send_resp(resp)
+            else:
+                self.send_reponse(404)
+            return
         if self.path.startswith("/listdevices"):
             self.send_resp(self.topo().getDevices())
             return
+        
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self):

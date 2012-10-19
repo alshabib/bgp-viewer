@@ -1,3 +1,14 @@
+function getHTML(data) {
+    var items = [];
+    $.each(data['rib'], function(obj) {
+        items.push('<li>Prefix: ' + data['rib'][obj]['prefix'] + ' -> nextHop: ' + data['rib'][obj]['nexthop'] +  '</li>');
+    });
+
+    return $('<ul/>', {
+         html: items.join('')
+    });
+}
+
 function setTipsy(tag) {
     $(tag + ' svg image').tipsy({ 
           //trigger: 'manual',
@@ -8,23 +19,35 @@ function setTipsy(tag) {
                 return  $(this).attr('id');
             },*/
           title: function () {
+            var ret = "";
             var name = $(this).attr('id');
             if (name.indexOf("SDNBGP1") != -1) {
-                $.getJSON('http://sdn1vpc.onlab.us:8090/wm/bgp/json', function (data) {
-                    var items = [];
-
-                     $.each(data['rib'], function(obj) {
-                        items.push('<li>Prefix: ' + obj['prefix'] + ' -> nextHop: ' + obj['nextHop'] +  '</li>');
-                     });
-
-                    $('<ul/>', {
-                     html: items.join('')
-                    }).appendTo('title');
-        
-
+                 $.ajax({
+                    url: 'http://localhost:8000/bgp1',
+                    dataType: 'json',
+                    async: false,
+                    success:  function (data) {
+                        ret = getHTML(data);
+            
+                    }
                 });
-            } else {
-                return name;
+                return ret.html();
+                
+            } else if (name.indexOf("SDNBGP2") != -1) {
+                 $.ajax({
+                    url: 'http://localhost:8000/bgp2',
+                    dataType: 'json',
+                    async: false,
+                    success:  function (data) {
+                        ret = getHTML(data);
+
+                    }
+                });
+                return ret.html();
+
+            }  
+            else {
+                return name
             }
           }   
     });   
