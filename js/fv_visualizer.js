@@ -4,8 +4,28 @@ function setTipsy(tag) {
           gravity: $.fn.tipsy.autoNS,
           html: true, 
           fade: true,
-          title: function(){
-            return $(this).attr('id');
+          /*title: function(){
+                return  $(this).attr('id');
+            },*/
+          title: function () {
+            var name = $(this).attr('id');
+            if (name.indexOf("SDNBGP1") != -1) {
+                $.getJSON('http://sdn1vpc.onlab.us:8090/wm/bgp/json', function (data) {
+                    var items = [];
+
+                     $.each(data['rib'], function(obj) {
+                        items.push('<li>Prefix: ' + obj['prefix'] + ' -> nextHop: ' + obj['nextHop'] +  '</li>');
+                     });
+
+                    $('<ul/>', {
+                     html: items.join('')
+                    }).appendTo('title');
+        
+
+                });
+            } else {
+                return name;
+            }
           }   
     });   
 }
@@ -18,21 +38,23 @@ function reset() {
 
 function setRegularLayout(){
   var layout = {};
-  layout['00:00:00:00:00:00:00:a1'] = [1/10, 1/4];
-  layout['00:00:00:00:00:00:00:a2'] = [1/10, 3/4];
-  layout['00:00:00:00:00:00:00:a3'] = [2/10, 2/4];
-  layout['00:00:00:00:00:00:00:a4'] = [3/10, 1/4];
-  layout['00:00:00:00:00:00:00:a5'] = [3/10, 3/4];
+  layout['SDNBGP1'] = [2/10, 1/5];
+  layout['SDNBGP2'] = [8/10, 1/5]; 
+  layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
+  layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
+  layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
+  layout['00:00:00:00:00:00:00:a4'] = [3/10, 2/5];
+  layout['00:00:00:00:00:00:00:a5'] = [3/10, 4/5];
   
-  layout['AS1'] = [5/10, 1/4];
-  layout['AS2'] = [4/10, 3/4];
-  layout['AS3'] = [6/10, 3/4];
+  layout['AS1'] = [5/10, 2/5];
+  layout['AS2'] = [4/10, 4/5];
+  layout['AS3'] = [6/10, 4/5];
 
-  layout['00:00:00:00:00:00:00:b1'] = [9/10, 1/4];
-  layout['00:00:00:00:00:00:00:b2'] = [9/10, 3/4];
-  layout['00:00:00:00:00:00:00:b3'] = [8/10, 2/4];
-  layout['00:00:00:00:00:00:00:b4'] = [7/10, 1/4];
-  layout['00:00:00:00:00:00:00:b5'] = [7/10, 3/4];
+  layout['00:00:00:00:00:00:00:b1'] = [9/10, 2/5];
+  layout['00:00:00:00:00:00:00:b2'] = [9/10, 4/5];
+  layout['00:00:00:00:00:00:00:b3'] = [8/10, 3/5];
+  layout['00:00:00:00:00:00:00:b4'] = [7/10, 2/5];
+  layout['00:00:00:00:00:00:00:b5'] = [7/10, 4/5];
   return layout;
 }
 
@@ -54,6 +76,8 @@ function start_demo(data_source, flow_source, tag) {
     setTimeout("setTipsy(\'"+tag+"\')", 3000); 
  
     function draw(json) {
+
+      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" } ];
 
       var nodes = json.nodes.map(Object);
     
@@ -110,6 +134,18 @@ function start_demo(data_source, flow_source, tag) {
           .attr("id", function(d){return d.name;})
         .call(force.drag);
 
+      var bgp_node = svg.selectAll("node")
+          .data(bgp_nodes)
+        .enter().append("svg:g")
+          .attr("class", "node")
+          .append("svg:image") 
+          .attr("xlink:href", function(d) {return  "images/bgpd.png";  } )
+          .attr("width", image_size + "px")
+          .attr("height", image_size + "px")
+          .attr("x", function(d) { return (w * layout[d.name][0]) - image_size/2; } )
+          .attr("y", function(d) { return (h * layout[d.name][1]) - image_size/2; } )
+          .attr("id", function(d){return d.name;})
+
 
     
 
@@ -123,6 +159,7 @@ function start_demo(data_source, flow_source, tag) {
         .on("tick", function(e) {
 
 
+        
         node.attr("transform", function(d) {return returnToPosition(d, e);});
 
         link.attr("x1", function(d) { return d.source.x+image_size/2; })
@@ -149,7 +186,6 @@ function start_demo(data_source, flow_source, tag) {
 
 
       function showFlows(paths) {
-        var list = [0,1,2,3,4,5];
         
         function laypath(info) {
             var arr = []
@@ -223,10 +259,8 @@ function start_demo(data_source, flow_source, tag) {
         var damper = 1;
         var alpha = e.alpha;
         var router_name = d.name;
-        
         x = fixPoint(d.x, w * layout[router_name][0], alpha, damper);
         y = fixPoint(d.y, h * layout[router_name][1], alpha, damper);
-
         d.x = x;
         d.y = y;
         return "translate(" + x + "," + y + ")";    
