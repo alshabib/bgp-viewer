@@ -9,7 +9,7 @@ function getHTML(data) {
     });
 }
 
-function setTipsy(tag) {
+function setTipsy(tag, data_source) {
     $(tag + ' svg image').tipsy({ 
           //trigger: 'manual',
           gravity: $.fn.tipsy.autoNS,
@@ -23,7 +23,7 @@ function setTipsy(tag) {
             var name = $(this).attr('id');
             if (name.indexOf("SDNBGP1") != -1) {
                  $.ajax({
-                    url: 'http://localhost:8000/bgp1',
+                    url: data_source + '/bgp1',
                     dataType: 'json',
                     async: false,
                     success:  function (data) {
@@ -35,7 +35,7 @@ function setTipsy(tag) {
                 
             } else if (name.indexOf("SDNBGP2") != -1) {
                  $.ajax({
-                    url: 'http://localhost:8000/bgp2',
+                    url: data_source + '/bgp2',
                     dataType: 'json',
                     async: false,
                     success:  function (data) {
@@ -83,7 +83,7 @@ function setRegularLayout(){
 
 var layout = setRegularLayout();
 
-function start_demo(data_source, flow_source, tag) {
+function start_demo(data_source, tag) {
 
     var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
@@ -94,9 +94,9 @@ function start_demo(data_source, flow_source, tag) {
         .attr("width", w)
         .attr("height", h);
 
-    d3.json(data_source, draw);
+    d3.json(data_source + '/topology', draw);
     
-    setTimeout("setTipsy(\'"+tag+"\')", 3000); 
+    setTimeout("setTipsy(\'"+tag+"\',\'"+data_source+"\')", 3000); 
  
     function draw(json) {
 
@@ -266,7 +266,7 @@ function start_demo(data_source, flow_source, tag) {
 
      setInterval(function() {
         $.ajax({
-            url: flow_source,
+            url: data_source + '/flows',
             success: function(data) {
                showFlows(data)
            },
