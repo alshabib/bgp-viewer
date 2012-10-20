@@ -63,6 +63,7 @@ function setRegularLayout(){
   var layout = {};
   layout['SDNBGP1'] = [2/10, 1/5];
   layout['SDNBGP2'] = [8/10, 1/5]; 
+  layout['FloodLight'] = [5/10, 1/10];
   layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
   layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
   layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
@@ -100,7 +101,7 @@ function start_demo(data_source, tag) {
  
     function draw(json) {
 
-      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" } ];
+      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" }, { "name" : "FloodLight" } ];
 
       var nodes = json.nodes.map(Object);
     
@@ -162,8 +163,8 @@ function start_demo(data_source, tag) {
         .enter().append("svg:g")
           .attr("class", "node")
           .append("svg:image") 
-          .attr("xlink:href", function(d) {return  "images/bgpd.png";  } )
-          .attr("width", image_size + "px")
+          .attr("xlink:href", function(d) {if (d.name.indexOf("FloodLight") != -1) { return "images/floodlight.png"; } else { return  "images/bgpd.png";  }} )
+          .attr("width", function (d) { if (d.name.indexOf("FloodLight") != -1) { return 2*image_size + "px"; } else { return  image_size + "px";  }})
           .attr("height", image_size + "px")
           .attr("x", function(d) { return (w * layout[d.name][0]) - image_size/2; } )
           .attr("y", function(d) { return (h * layout[d.name][1]) - image_size/2; } )
