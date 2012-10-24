@@ -63,7 +63,8 @@ function setRegularLayout(){
   var layout = {};
   layout['SDNBGP1'] = [2/10, 1/5];
   layout['SDNBGP2'] = [8/10, 1/5]; 
-  layout['FloodLight'] = [5/10, 1/10];
+  layout['FloodLight1'] = [2/10, 1/20];
+  layout['FloodLight2'] = [8/10, 1/20];
   layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
   layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
   layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
@@ -101,7 +102,7 @@ function start_demo(data_source, tag) {
  
     function draw(json) {
 
-      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" }, { "name" : "FloodLight" } ];
+      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" }, { "name" : "FloodLight-1" }, { "name" : "FloodLight-2" } ];
 
       var nodes = json.nodes.map(Object);
     
