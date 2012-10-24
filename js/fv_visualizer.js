@@ -63,8 +63,8 @@ function setRegularLayout(){
   var layout = {};
   layout['SDNBGP1'] = [2/10, 1/5];
   layout['SDNBGP2'] = [8/10, 1/5]; 
-  layout['FloodLight1'] = [2/10, 1/20];
-  layout['FloodLight2'] = [8/10, 1/20];
+  layout['FloodLight-1'] = [2/10, 1/20];
+  layout['FloodLight-2'] = [8/10, 1/20];
   layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
   layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
   layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
