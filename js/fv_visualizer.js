@@ -59,17 +59,16 @@ function reset() {
 
 }
 
-function getFlows(data_source, dpid) {
+function getFlows(data_source, tag, dpid) {
     var ret;
     $.ajax({
                     url: data_source + '/flowtable/'+dpid,
                     dataType: 'json',
-                    async: false,
+                    async: true,
                     success:  function (data) {
-                        ret = data;
+                        d3.select(tag).text(JSON.stringify(data, null, "  "));
                     }
     });
-    return JSON.stringify(ret, null, "  ");
 }
     
     
@@ -172,7 +171,7 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("width", image_size + "px")
           .attr("height", image_size + "px")
           .attr("id", function(d){return d.name;})
-          .on("click", function(d) { d3.select(fl_tag).text(getFlows(data_source, d.name)); })
+          .on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
         .call(force.drag);
 
       var bgp_node = svg.selectAll("node")
