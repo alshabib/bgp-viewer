@@ -230,7 +230,9 @@ class TopoFetcher():
             self.fcv.acquire()
             self.flow_paths = None
             self.bgps = None
+            self.flowtables = None
             self.flow_paths = fls
+            self.flowtables = flows
             self.bgps = bgps  
             self.fcv.notify()
             self.fcv.release()
@@ -242,6 +244,16 @@ class TopoFetcher():
         topo = self.d3_dict
         self.cv.release()
         return topo
+
+    def getFlowTables(self, dpid):
+        self.fcv.acquire()
+        while self.flowtables == None:
+            self.fcv.wait()
+        if dpid in self.flowtables:
+            flows = self.flowtables[dpid]
+        else: flows = []
+        self.fcv.release()
+        return flows
 
     def getDevices(self):
         self.cv.acquire()
@@ -279,6 +291,14 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps(data, indent=2))
 
     def do_GET(self):
+        if self.path.startswith("/flowtable"):
+            dpid = self.path.split('/')[-1];
+            resp = self.topo().getFlowTables(dpid)
+            if resp != None:
+                self.send_resp(resp)
+            else:
+                self.send_response(404)
+            return
         if self.path.startswith("/topology"):
             resp = self.topo().getTopology()
             if resp != None:

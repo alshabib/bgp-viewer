@@ -59,6 +59,21 @@ function reset() {
 
 }
 
+function getFlows(data_source, dpid) {
+    var ret;
+    $.ajax({
+                    url: data_source + '/flowtable/'+dpid,
+                    dataType: 'json',
+                    async: false,
+                    success:  function (data) {
+                        ret = data;
+                    }
+    });
+    return JSON.stringify(ret, null, "  ");
+}
+    
+    
+
 function setRegularLayout(){
   var layout = {};
   layout['SDNBGP1'] = [2/10, 1/5];
@@ -85,7 +100,7 @@ function setRegularLayout(){
 
 var layout = setRegularLayout();
 
-function start_demo(data_source, tag) {
+function start_demo(data_source, tag, fl_tag) {
 
     var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
@@ -157,6 +172,7 @@ function start_demo(data_source, tag) {
           .attr("width", image_size + "px")
           .attr("height", image_size + "px")
           .attr("id", function(d){return d.name;})
+          .on("click", function(d) { d3.select(fl_tag).text(getFlows(data_source, d.name)); })
         .call(force.drag);
 
       var bgp_node = svg.selectAll("node")
