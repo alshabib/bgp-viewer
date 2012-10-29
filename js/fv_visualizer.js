@@ -361,8 +361,7 @@ function drawTree(json) {
 
   // Initialize the display to show a few nodes.
   root.children.forEach(toggleAll);
-  toggle(root.children[1]);
-  toggle(root.children[1]);
+  toggle(root.children[0]);
 
   update(root);
 }
