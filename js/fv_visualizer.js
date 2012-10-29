@@ -76,10 +76,10 @@ function getFlows(data_source, tag, dpid) {
 
 function setRegularLayout(){
   var layout = {};
-  layout['SDNBGP1'] = [2/10, 1/5];
-  layout['SDNBGP2'] = [8/10, 1/5]; 
-  layout['FloodLight-1'] = [2/10, 1/20];
-  layout['FloodLight-2'] = [8/10, 1/20];
+  layout['SDNBGP1'] = [3/10, 1/10];
+  layout['SDNBGP2'] = [9/10, 1/10]; 
+  layout['FloodLight-1'] = [1/10, 1/10];
+  layout['FloodLight-2'] = [7/10, 1/10];
   layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
   layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
   layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
@@ -138,15 +138,17 @@ function start_demo(data_source, tag, fl_tag) {
  
     function draw(json) {
 
-      var bgp_nodes = [ { "name" : "SDNBGP1" }, { "name" : "SDNBGP2" }, { "name" : "FloodLight-1" }, { "name" : "FloodLight-2" } ];
+      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
 
       var nodes = json.nodes.map(Object);
     
       var groups = d3.nest().key(function(d) { return d.group; }).entries(nodes);
-
+      
+      var bgp_groups = d3.nest().key(function(d) { return d.group; }).entries(bgp_nodes);  
+      
       var groupPath = function(d) {
         return "M" + 
-        d3.geom.hull(d.values.map(function(i) { 
+        d3.geom.hull(d.values.map(function(i) {
                 if (i.name.indexOf("a1") != -1) {
                     return [i.x, i.y ];
                 }
@@ -162,6 +164,20 @@ function start_demo(data_source, tag, fl_tag) {
                 return [i.x + image_size/2, i.y + image_size / 2]; }))
             .join("L")
         + "Z";
+    };
+
+    var bgp_groupPath = function(d) {
+        var ret = "M"
+        for (var i = 0 ; i < d.values.length ; i++) {
+            if (i !== d.values.length -1) {
+                ret = ret + (w*layout[d.values[i].name][0] + image_size/2) + "," +  h*layout[d.values[i].name][1] ;
+                ret = ret + "L";
+            } else {
+                ret = ret + (w*layout[d.values[i].name][0] - image_size/2) + "," +  h*layout[d.values[i].name][1] ;
+            }
+        }
+        return ret +"Z";
+
     };
 
     var groupFill = function(d, i) { return fill(i & 3); };
@@ -215,8 +231,6 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("id", function(d){return d.name;})
 
 
-    
-
 
     svg.style("opacity", 1e-6)
   .transition()
@@ -244,8 +258,16 @@ function start_demo(data_source, tag, fl_tag) {
             .style("stroke-linejoin", "round")
             .style("opacity", .2)
             .attr("d", groupPath);
+
+        svg.selectAll("bgp_path").data(bgp_groups)
+           .enter().insert("path", "g")
+            .style("fill", groupFill)
+            .style("stroke", groupFill)
+            .style("stroke-width", 40)
+            .style("stroke-linejoin", "round")
+            .style("opacity", .5)
+            .attr("d", bgp_groupPath);
     
- 
  
       });
 
