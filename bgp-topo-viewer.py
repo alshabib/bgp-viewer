@@ -49,6 +49,32 @@ def flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
+def treeize(data, dpid):
+    tree = { 'name' : dpid, 'children' : []}
+    
+    for j,fe in enumerate(data):
+        baseElem = []
+        matchElem = []
+        actionElem = []
+        for key,value in fe.items():
+            if key == 'match':
+                for k,v in value.items():
+                    matchElem.append( {'name' : "%s : %s" % (k,v) })
+            elif key == 'actions':
+                for i,val in enumerate(value):
+                    subact = []
+                    for k,v in val.items():
+                        subact.append({ 'name' : "%s : %s" % (k, v) })
+                actionElem.append({ 'name' : i+1, 'children' : subact })
+            else:
+                baseElem.append( { 'name' : "%s : %s" % (key, value) } )    
+        base = { 'name' : 'base', 'children' : baseElem }
+        match = { 'name' : 'match', 'children' : matchElem }
+        actions = { 'name' : 'actions', 'children' : actionElem }
+        tree['children'].append({ 'name' : j + 1, 'children' : [ base, match, actions ] })
+    return tree
+        
+
 def debug(msg):
     if args.verbose:
         print msg
@@ -293,7 +319,7 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/flowtable"):
             dpid = self.path.split('/')[-1];
-            resp = self.topo().getFlowTables(dpid)
+            resp = treeize(self.topo().getFlowTables(dpid), dpid)
             if resp != None:
                 self.send_resp(resp)
             else:
