@@ -192,7 +192,13 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("xlink:href", function(d) {if (d.name.indexOf("AS") != -1) { return "images/cloud.png"; } else { return  "images/router.png"; } } )
           .attr("width", image_size + "px")
           .attr("height", image_size + "px")
-          .attr("id", function(d){return d.name;})
+          .attr("id", function(d){ 
+                 if (d.name.indexOf("AS") != -1) { 
+                    return d.name; 
+                 } else { 
+                    return d.name.split(":").pop();
+                 }
+          })
           .on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
         .call(force.drag);
 
