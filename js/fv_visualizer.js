@@ -1,3 +1,26 @@
+$(function(){
+$('#filter').submit(function () {
+    var inputs = $('#filter :input');
+    var values = {};
+    inputs.each(function() {
+        values[this.name] = $(this).val();
+    });
+    console.log(values['data']);
+    $.ajax({
+        type: 'POST',
+        url: 'http://localhost:8000/filter',
+        cache: false,
+        data : { 'filter' : values['data']},
+        dataType : 'json',
+        success: function(json) {
+            return true;
+        }
+            });
+        return false;
+        });
+});
+
+
 function getHTML(data) {
     var items = [];
     $.each(data['rib'], function(obj) {
@@ -66,7 +89,8 @@ function getFlows(data_source, tag, dpid) {
                     dataType: 'json',
                     async: true,
                     success:  function (data) {
-                        drawTree(data)
+                        console.log(data);
+                        drawTree(data, true)
                         //d3.select(tag).text(JSON.stringify(data, null, "  "));
                     }
     });
@@ -95,6 +119,11 @@ function setRegularLayout(){
   layout['00:00:00:00:00:00:00:b3'] = [8/10, 3/5];
   layout['00:00:00:00:00:00:00:b4'] = [7/10, 2/5];
   layout['00:00:00:00:00:00:00:b5'] = [7/10, 4/5];
+
+  layout['00:00:00:00:00:00:0a:31'] = [1/20, 1/5];
+  layout['00:00:00:00:00:00:0a:32'] = [1/20, 3/5];
+  layout['00:00:00:00:00:00:0a:33'] = [4/20, 1/5];
+  layout['00:00:00:00:00:00:0a:34'] = [4/20, 3/5];
   return layout;
 }
 
@@ -309,12 +338,12 @@ function start_demo(data_source, tag, fl_tag) {
             .style("fill", "none");    
 
 
-
+          var packet = null;
           for (var j = 0 ; j < 13 ; j++) {
-            var packet = svg.append("rect")
+            packet = svg.append("rect")
                 .attr("height", 5)
                 .attr("width", 5)
-                .style("opacity",0.8)
+                //.style("opacity",0.8)
                 .style("fill", packetFill(i))
                 .transition().duration(5000).delay((i*750)+(j*75)).ease("linear")
                 .attrTween("transform", translateAlong(path.node()))
@@ -322,7 +351,6 @@ function start_demo(data_source, tag, fl_tag) {
                             d3.select(this).remove();
                 });
           }  
-
             
 
         }
@@ -375,7 +403,7 @@ function start_demo(data_source, tag, fl_tag) {
 }
 
 
-function drawTree(json) {
+function drawTree(json, togg) {
   root = json;
   root.x0 = th / 2;
   root.y0 = 0;
@@ -388,9 +416,10 @@ function drawTree(json) {
   }
 
   // Initialize the display to show a few nodes.
-  root.children.forEach(toggleAll);
-  toggle(root.children[0]);
-
+  if (togg) {
+    root.children.forEach(toggleAll);
+    toggle(root.children[0]);
+  }
   update(root);
 }
 

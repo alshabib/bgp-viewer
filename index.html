@@ -18,6 +18,24 @@
         <div class=label>BGP in an SDN World</div>
         <div id=topology></div>
       </div>
+     <div id="paper2" class="paper">
+        <div class=label>Filter</div>
+        <div id=filter style="height:400px;width:400px">
+            <form name="filter" method="post"  onSubmit="return false;">
+            <textarea  name="data" rows="50" cols="40" style="height:350px;width:350px"> 
+   Enter filter as a json formatted string with FloodLight style markers. Filter elements should be entered as a list and each list element should be a dictionary.
+   List elements are or'd against the set of flow rules and the dictionary entries are and'd against each flowentry. Also keywords like (use quotes) 'all' and 'None', will respectively show all and none of the flows.
+
+For example:
+   [ { 'networkDestination' : '192.168.30.0' } ] will show all flows with IP destination 192.168.30.0
+
+            
+             </textarea>
+            <input type="submit" value="Apply!" id="submit" />
+            </form>
+        </div>
+      </div>
+
     </div>
     <div class="graphs">
       <div id="paper1" class="paper">
@@ -26,12 +44,6 @@
       </div>
     </div>
     <div class="panel">
-      <div class="button">
-        <button id=button1 class="metal linear" onclick="inject();">Down Link</button>
-      </div>
-      <div class="button">
-        <button id=button2 class="metal linear" onclick="reset();">Reset</button>
-      </div>
     </div>
     <div class="spinner">
         <div class="bar1"></div>

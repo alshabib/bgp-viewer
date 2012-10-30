@@ -2,7 +2,7 @@
 
 import argparse
 import json, sys, threading, os, time
-import urllib2
+import urllib2, urlparse
 import SimpleHTTPServer, SocketServer
 
 FL_TOPO = "/wm/topology/links/json"
@@ -65,13 +65,15 @@ def treeize(data, dpid):
                     subact = []
                     for k,v in val.items():
                         subact.append({ 'name' : "%s : %s" % (k, v) })
-                actionElem.append({ 'name' : i+1, 'children' : subact })
+                    actionElem.append({ 'name' : i+1, 'children' : subact })
             else:
                 baseElem.append( { 'name' : "%s : %s" % (key, value) } )    
         base = { 'name' : 'base', 'children' : baseElem }
         match = { 'name' : 'match', 'children' : matchElem }
         actions = { 'name' : 'actions', 'children' : actionElem }
         tree['children'].append({ 'name' : j + 1, 'children' : [ base, match, actions ] })
+    if len(tree['children']) == 0:
+        tree['children'].append({ 'name' : 'No Flow Entries' })
     return tree
         
 
@@ -153,11 +155,29 @@ def findNextHop(flows, nextHop, inport):
                      return (nextHop, f['port']) 
     return (None, None)
 
-def findFlowPaths(flows, thash):
+def passFilter(filt, fe, dpid):
+    if filt == 'all':
+        return True
+    if filt == 'None':
+        return False
+    for rule in filt:
+        for key, value in rule.items():
+            if key == 'dpid':
+                if value == dpid:
+                    continue
+                else:
+                    return False
+            if fe['match'][key] != value:
+                return False
+    return True
+
+def findFlowPaths(flows, thash, filt = 'None'):
     sources = determineSourceFlows(flows, thash)
     paths = []
     for dpid, flowEntries in sources.items():
         for fe in flowEntries:
+            if (not passFilter(filt, fe, dpid)):
+                continue
             path = []
             path.append(dpid)
             port = -1
@@ -192,6 +212,8 @@ class TopoFetcher():
         HTTPHandler.topo = self.getTopo
         self.cv = threading.Condition()
         self.fcv = threading.Condition()
+        self.filtcv = threading.Condition()
+        self.filt = 'None'
         self.flowupdateEvent = threading.Event()
         self.flowupdate = threading.Thread(target=self.update_flows)
         self.fetch_topology() 
@@ -251,7 +273,7 @@ class TopoFetcher():
         debug("Obtained flow info")
         if len(topo) > 0 and isTraffic(flows) > 0:
             fls = []
-            for flow in findFlowPaths(flows, buildTopoHash(topo)):
+            for flow in findFlowPaths(flows, buildTopoHash(topo), filt = self.getFilter()):
                 fls.append(map(lambda x: self.node_index.index(x), flow))
             self.fcv.acquire()
             self.flow_paths = None
@@ -306,6 +328,20 @@ class TopoFetcher():
         bgps = self.bgps
         self.fcv.release()
         return bgps[bgp]
+
+    def setFilter(self, filt):
+        debug("Filter is %s" % filt) 
+        self.filtcv.acquire()
+        self.filt = filt
+        self.filtcv.release()
+    
+
+    def getFilter(self):
+        self.filtcv.acquire()
+        filt =  self.filt
+        self.filtcv.release()
+        return filt
+
 
 
 class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -362,7 +398,12 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self):
-        pass
+        if self.path.startswith("/filter"):
+            length = int(self.headers.getheader('content-length'))        
+            data_string = dict(urlparse.parse_qsl(self.rfile.read(length)))
+            debug(data_string)
+            data = eval(data_string['filter'])
+            self.topo().setFilter(data)
 
     def topo(self):
         pass
