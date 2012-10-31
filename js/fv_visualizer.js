@@ -5,7 +5,6 @@ $('#filter').submit(function () {
     inputs.each(function() {
         values[this.name] = $(this).val();
     });
-    console.log(values['data']);
     $.ajax({
         type: 'POST',
         url: 'http://localhost:8000/filter',
@@ -89,7 +88,6 @@ function getFlows(data_source, tag, dpid) {
                     dataType: 'json',
                     async: true,
                     success:  function (data) {
-                        console.log(data);
                         drawTree(data, true)
                         //d3.select(tag).text(JSON.stringify(data, null, "  "));
                     }
@@ -100,19 +98,19 @@ function getFlows(data_source, tag, dpid) {
 
 function setRegularLayout(){
   var layout = {};
-  layout['SDNBGP1'] = [3/10, 1/10];
+  layout['SDNBGP1'] = [6/10, 1/10];
   layout['SDNBGP2'] = [9/10, 1/10]; 
-  layout['FloodLight-1'] = [1/10, 1/10];
+  layout['FloodLight-1'] = [4/10, 1/10];
   layout['FloodLight-2'] = [7/10, 1/10];
-  layout['00:00:00:00:00:00:00:a1'] = [1/10, 2/5];
-  layout['00:00:00:00:00:00:00:a2'] = [1/10, 4/5];
-  layout['00:00:00:00:00:00:00:a3'] = [2/10, 3/5];
-  layout['00:00:00:00:00:00:00:a4'] = [3/10, 2/5];
-  layout['00:00:00:00:00:00:00:a5'] = [3/10, 4/5];
-  
-  layout['AS1'] = [5/10, 2/5];
-  layout['AS2'] = [4/10, 4/5];
-  layout['AS3'] = [6/10, 4/5];
+  layout['00:00:00:00:00:00:00:a1'] = [1/4, 1/2];
+  layout['00:00:00:00:00:00:00:a2'] = [1/8, 3/4];
+  layout['00:00:00:00:00:00:00:a3'] = [2/3, 0.45];
+  layout['00:00:00:00:00:00:00:a4'] = [.55, .85];
+  layout['00:00:00:00:00:00:00:a5'] = [.9, .5];
+  layout['00:00:00:00:00:00:00:a6'] = [.75, 3/4]; 
+  layout['AS1'] = [.8, 0.3];
+  layout['AS2'] = [1/10, 0.95];
+  layout['AS3'] = [9/10, 0.95];
 
   layout['00:00:00:00:00:00:00:b1'] = [9/10, 2/5];
   layout['00:00:00:00:00:00:00:b2'] = [9/10, 4/5];
@@ -126,8 +124,8 @@ function setRegularLayout(){
   layout['00:00:00:00:00:00:0a:34'] = [4/20, 3/5];
   return layout;
 }
-
 var layout = setRegularLayout();
+
 
 var m = [10, 60, 10, 60],
     tw = 1280 - m[1] - m[3],
@@ -148,6 +146,10 @@ function start_demo(data_source, tag, fl_tag) {
     var image_size = 100;
     var fill = d3.scale.category10();
     var pfill = d3.scale.category20();
+    var bgmap = { 'background-repeat' : 'no-repeat', 'background-attachment': 'fixed', 'background-position':'10% 25%', 'background-image' : 'url(images/usa.png)', 'background-size' : '1200px 700px' }; 
+
+
+    $("#topology").css(bgmap);  
 
     vis = d3.select(fl_tag).append("svg:svg")
     .attr("width", tw + m[1] + m[3])
@@ -167,15 +169,18 @@ function start_demo(data_source, tag, fl_tag) {
  
     function draw(json) {
 
-      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
+      //var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
 
-      var nodes = json.nodes.map(Object);
+      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "FloodLight-1", "group" : "0" } ]
+
+      //var nodes = json.nodes.map(Object);
+      //var links = json.links.map(Object);
     
-      var groups = d3.nest().key(function(d) { return d.group; }).entries(nodes);
+      //var groups = d3.nest().key(function(d) { return d.group; }).entries(nodes);
       
       var bgp_groups = d3.nest().key(function(d) { return d.group; }).entries(bgp_nodes);  
       
-      var groupPath = function(d) {
+     /* var groupPath = function(d) {
         return "M" + 
         d3.geom.hull(d.values.map(function(i) {
                 if (i.name.indexOf("a1") != -1) {
@@ -193,7 +198,7 @@ function start_demo(data_source, tag, fl_tag) {
                 return [i.x + image_size/2, i.y + image_size / 2]; }))
             .join("L")
         + "Z";
-    };
+    };*/
 
     var bgp_groupPath = function(d) {
         var ret = "M"
@@ -216,19 +221,32 @@ function start_demo(data_source, tag, fl_tag) {
                 .linkDistance(10)
                 .linkStrength(0)
                 .charge(0)
-                .size([w, h])
-                .nodes(nodes)
-                .links(json.links).start()
+                .size([w, h]);
+                //.nodes(json.nodes)
+                //.links(json.links).start()
 
+        var nodes = force.nodes();
+        var links = force.links();
 
+      json.nodes.forEach(function(item) {
+            nodes.push(item);
+        });
+
+        json.links.forEach(function(item) {
+            links.push(item);
+        });
+
+        force.start();
     
-      var link = svg.selectAll("line")
-          .data(json.links)
+     /* var link = svg.selectAll("line")
+          .data(links)
          .enter().append("svg:line")
           .attr("stroke","green")
           .attr("stroke-width",2)
-          .attr("id", function(d){return d.id;});
+          .attr("id", function(d){return d.id;});*/
 
+    
+      update_topo();
       var node = svg.selectAll("g.node")
           .data(nodes)
         .enter().append("svg:g")
@@ -260,7 +278,6 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("id", function(d){return d.name;})
 
 
-
     svg.style("opacity", 1e-6)
   .transition()
     .duration(1000)
@@ -273,12 +290,12 @@ function start_demo(data_source, tag, fl_tag) {
         
         node.attr("transform", function(d) {return returnToPosition(d, e);});
 
-        link.attr("x1", function(d) { return d.source.x+image_size/2; })
+        svg.selectAll("line").attr("x1", function(d) { return d.source.x+image_size/2; })
             .attr("y1", function(d) { return d.source.y+image_size/2; })
             .attr("x2", function(d) { return d.target.x+image_size/2; })
             .attr("y2", function(d) { return d.target.y+image_size/2; });
 
-        svg.selectAll("path").data(groups)
+        /*svg.selectAll("path").data(groups)
             .attr("d", groupPath)
            .enter().insert("path", "g")
             .style("fill", groupFill)
@@ -286,7 +303,7 @@ function start_demo(data_source, tag, fl_tag) {
             .style("stroke-width", 40)
             .style("stroke-linejoin", "round")
             .style("opacity", .2)
-            .attr("d", groupPath);
+            .attr("d", groupPath);*/
 
         svg.selectAll("bgp_path").data(bgp_groups)
            .enter().insert("path", "g")
@@ -358,6 +375,68 @@ function start_demo(data_source, tag, fl_tag) {
 
       }
 
+     Array.prototype.diff = function(arr) {
+        return this.filter(function(i) {
+        for (var j = 0; j < arr.length ; j++) {
+           if (arr[j].source == i.source && 
+                  arr[j].target == i.target)
+            return false;
+        }
+        return true;
+    });
+    };
+
+
+    function cdiff(topo) {
+
+        var changed = false;
+        
+        var l_adds = topo.links.diff(links);
+        var l_rems = links.diff(topo.links);
+
+        for (var i = 0; i < l_rems.length ; i++) {
+            for (var j = 0; j < links.length; j++) {
+                if (links[j].id == l_rems[i].id) {
+                    links.splice(j,1);
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        for (var i = 0; i < l_adds.length; i++) {
+            links.push(l_adds[i]);
+            changed = true;
+        }
+
+        if (changed)
+             update_topo();
+
+    } 
+
+    function update_topo() {
+       
+         var l = svg.selectAll("line")
+          .data(links);
+
+        l.enter().insert("svg:line")
+          .attr("stroke","green")
+          .attr("stroke-width",2)
+          .attr("id", function(d){return d.id;});
+
+        l.exit().remove()
+        force.start()
+    }
+
+     setInterval(function() {
+        $.ajax({
+            url : data_source + '/topology',
+            success: function(data) {
+                cdiff(data);
+            },
+            dataType: 'json'
+        });
+    }, 2000);
 
      setInterval(function() {
         $.ajax({
@@ -374,7 +453,7 @@ function start_demo(data_source, tag, fl_tag) {
      
       function returnToPosition(d, e){
         var x=0, y=0;
-        var damper = 1;
+        var damper = 10;
         var alpha = e.alpha;
         var router_name = d.name;
         x = fixPoint(d.x, w * layout[router_name][0], alpha, damper);

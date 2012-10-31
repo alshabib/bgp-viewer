@@ -12,8 +12,8 @@ FL_BGP = "/wm/bgp/json"
 
 NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
 
-NON_OF_FLOW = {"00:00:00:00:00:00:00:a4:2" : (["AS1"],'00:00:00:00:00:00:00:b4',2), "00:00:00:00:00:00:00:a5:2" : (["AS2", "AS3"],'00:00:00:00:00:00:00:b5',2), \
-                "00:00:00:00:00:00:00:b4:2" : (["AS1"],'00:00:00:00:00:00:00:a4',2), "00:00:00:00:00:00:00:b5:2" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a5',2)}
+NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:2" : (["AS1"],'00:00:00:00:00:00:00:a5',2), "00:00:00:00:00:00:00:a2:2" : (["AS2", "AS3"],'00:00:00:00:00:00:00:a6',2), \
+                "00:00:00:00:00:00:00:a6:2" : (["AS1"],'00:00:00:00:00:00:00:a3',2), "00:00:00:00:00:00:00:a6:2" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a2',2)}
 
 DESC = "Collects topology and other information from Floodlight and exposes it over a webserver"
 
@@ -108,12 +108,13 @@ def d3ize(sws, topo):
             node_index = node_index + [ sw['dpid'] for sw in sws[group] ] 
         d3_dict['nodes'] = nodes
         links = [ { "source" : node_index.index(link["src-switch"]), "target" : node_index.index(link["dst-switch"]) } for link in topo ]
-        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a4"), "target" : node_index.index("AS1") })
-        links.append({"target" : node_index.index("00:00:00:00:00:00:00:b4"), "source" : node_index.index("AS1") })
-        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a5"), "target" : node_index.index("AS2") })
+        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a3"), "target" : node_index.index("AS1") })
+        links.append({"target" : node_index.index("00:00:00:00:00:00:00:a5"), "source" : node_index.index("AS1") })
+        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a2"), "target" : node_index.index("AS2") })
         links.append({"source" : node_index.index("AS2"), "target" : node_index.index("AS3") })
-        links.append({"source" : node_index.index("AS3"), "target" : node_index.index("00:00:00:00:00:00:00:b5") })
-
+        links.append({"source" : node_index.index("AS3"), "target" : node_index.index("00:00:00:00:00:00:00:a6") })
+        for i,link in enumerate(links):
+            links[i]['id'] = i
         d3_dict["links"] = links     
     else:
         pass
@@ -160,16 +161,21 @@ def passFilter(filt, fe, dpid):
         return True
     if filt == 'None':
         return False
+    ret = False
     for rule in filt:
+        attrs = True
         for key, value in rule.items():
             if key == 'dpid':
                 if value == dpid:
                     continue
                 else:
-                    return False
+                    attrs = False
+                    break
             if fe['match'][key] != value:
-                return False
-    return True
+                attrs = False
+                break
+        ret = ret | attrs
+    return ret
 
 def findFlowPaths(flows, thash, filt = 'None'):
     sources = determineSourceFlows(flows, thash)
@@ -215,24 +221,33 @@ class TopoFetcher():
         self.filtcv = threading.Condition()
         self.filt = 'None'
         self.flowupdateEvent = threading.Event()
+        self.topoupdateEvent = threading.Event()
         self.flowupdate = threading.Thread(target=self.update_flows)
+        self.topoupdate = threading.Thread(target=self.update_topo)
         self.fetch_topology() 
         self.fetch_flows()
         self.httpd = TCPServer((args.httphost, args.httpport), HTTPHandler)
         try:
             debug("Starting flow update thread")
             self.flowupdate.start()
+            debug("Starting topology update thread")
+            self.topoupdate.start()
             debug("Firing up HTTP server, now serving forever on host %s and port %s" \
                                         % (args.httphost,args.httpport) )
             self.httpd.serve_forever()
         except KeyboardInterrupt:
             debug("Stopping flow update thread")
             self.flowupdateEvent.set()
+            self.topoupdateEvent.set()
             debug("Shutdown http server")
     
     def getTopo(self):
         return self
 
+    def update_topo(self):
+        while not self.topoupdateEvent.is_set():
+            self.fetch_topology()
+            time.sleep(args.update)
 
     def update_flows(self):
         while not self.flowupdateEvent.is_set():
@@ -251,6 +266,7 @@ class TopoFetcher():
             sws.append(do_url(url))
         if (len(topo) > 0 and len(sws) > 0):
             self.cv.acquire()
+            topo.sort()
             self.d3_dict = None
             (self.node_index, self.d3_dict) = d3ize(sws, topo)
             self.cv.notify()
@@ -267,9 +283,12 @@ class TopoFetcher():
             fls.append(do_url(url))
             url = "http://%s%s" % (server, FL_BGP)
             bgps.append(do_url(url))
-        flows = dict(fls.pop(0),**fls.pop(0))
-        for fl in fls:
-            flows = dict(flows, **fl)     
+        if len(fls) == 1:
+            flows = fls.pop(0)
+        else:
+            flows = dict(fls.pop(0),**fls.pop(0))
+            for fl in fls:
+                flows = dict(flows, **fl)     
         debug("Obtained flow info")
         if len(topo) > 0 and isTraffic(flows) > 0:
             fls = []
