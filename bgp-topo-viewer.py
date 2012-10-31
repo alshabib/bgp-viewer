@@ -380,7 +380,7 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             else:
                 self.send_response(404)
             return
-        if self.path.startwith("/downlink"):
+        if self.path.startswith("/downlink"):
             linkno = self.path.split('/')[-1];
             return
         if self.path.startswith("/topology"):
