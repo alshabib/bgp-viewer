@@ -382,7 +382,7 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             return
         if self.path.startwith("/downlink"):
             linkno = self.path.split('/')[-1];
-            
+            return
         if self.path.startswith("/topology"):
             resp = self.topo().getTopology()
             if resp != None:
