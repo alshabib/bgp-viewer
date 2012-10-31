@@ -375,12 +375,28 @@ function start_demo(data_source, tag, fl_tag) {
 
       }
 
+     Array.prototype.diff2 = function(arr) {
+        return this.filter(function(i) {
+        for (var j = 0; j < arr.length ; j++) {
+           if (arr[j].source === i.source.index && 
+                  arr[j].target === i.target.index)
+            return false;
+
+        }
+        return true;
+    });
+    };
+
+
+
+
      Array.prototype.diff = function(arr) {
         return this.filter(function(i) {
         for (var j = 0; j < arr.length ; j++) {
-           if (arr[j].source == i.source && 
-                  arr[j].target == i.target)
+           if (arr[j].source.index === i.source && 
+                  arr[j].target.index === i.target)
             return false;
+
         }
         return true;
     });
@@ -392,7 +408,8 @@ function start_demo(data_source, tag, fl_tag) {
         var changed = false;
         
         var l_adds = topo.links.diff(links);
-        var l_rems = links.diff(topo.links);
+        var l_rems = links.diff2(topo.links);
+
 
         for (var i = 0; i < l_rems.length ; i++) {
             for (var j = 0; j < links.length; j++) {
