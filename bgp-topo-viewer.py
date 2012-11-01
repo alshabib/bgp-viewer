@@ -216,7 +216,6 @@ def findFlowPaths(flows, thash, filt = 'None'):
             path.append(dpid)
             port = -1
             dl_dst = None
-            ip_dst = None
             ip_dst = fe['match']['networkDestination']
             fAS = findEndingAS(ip_dst)
             for f in fe['actions']:
@@ -245,9 +244,8 @@ def findFlowPaths(flows, thash, filt = 'None'):
                     break
                 path.append(nextHop)
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
-            if len(path) > 0: 
-                while fAS != None and path[-1] != fAS:
-                    path.pop()       
+            while len(path) > 0 and fAS != None and path[-1] != fAS:
+                path.pop()       
             paths.append(path)
     return paths
     
