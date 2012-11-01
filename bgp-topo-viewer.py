@@ -151,6 +151,8 @@ def determineSourceFlows(flows, thash):
     for dpid, flowEntries in flows.items():
          entries = []
          for fe in flowEntries:
+             if fe['packetCount'] == 0:
+                continue
              try:
                  thash[dpid][fe['match']['inputPort']]
              except KeyError as e:
@@ -161,7 +163,7 @@ def determineSourceFlows(flows, thash):
 def findNextHop(flows, nextHop, inport, dl_dst):
     for fe in flows[nextHop]:
          if fe['packetCount'] == 0:
-            continue
+             continue
          if fe['match']['inputPort'] == inport and fe['match']['dataLayerDestination'] == dl_dst:
              for f in fe['actions']:
                  if f['type'] == 'OUTPUT':
@@ -189,9 +191,20 @@ def passFilter(filt, fe, dpid):
         ret = ret | attrs
     return ret
 
+ENDS = { '172.16.20.0' : 'AS1', '172.16.30.0' : 'AS2', '172.16.40.0' : 'AS3' }
+
+
+def findEndingAS(ip):
+    if ENDS.has_key(ip):
+        return ENDS[ip]
+    else:
+        return None
+
 def findFlowPaths(flows, thash, filt = 'None'):
     sources = determineSourceFlows(flows, thash)
     paths = []
+    if len(sources.keys()) == 0:
+        return paths
     for dpid, flowEntries in sources.items():
         for fe in flowEntries:
             if (not passFilter(filt, fe, dpid)):
@@ -203,6 +216,9 @@ def findFlowPaths(flows, thash, filt = 'None'):
             path.append(dpid)
             port = -1
             dl_dst = None
+            ip_dst = None
+            ip_dst = fe['match']['networkDestination']
+            fAS = findEndingAS(ip_dst)
             for f in fe['actions']:
                 if f['type'] == 'OUTPUT':
                     port = f['port']
@@ -229,7 +245,9 @@ def findFlowPaths(flows, thash, filt = 'None'):
                     break
                 path.append(nextHop)
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
-                   
+            if len(path) > 0: 
+                while fAS != None and path[-1] != fAS:
+                    path.pop()       
             paths.append(path)
     return paths
     
