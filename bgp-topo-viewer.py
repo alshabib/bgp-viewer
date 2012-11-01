@@ -121,6 +121,13 @@ def d3ize(sws, topo):
         # send all info you got
     return (node_index, d3_dict)
 
+def fromAS(dpid, fe):
+    if NON_OF_FLOW.has_key('%s:%s' % (dpid, fe['match']['inputPort'])):
+        (AS, dp, port) = NON_OF_FLOW['%s:%s' % (dpid, fe['match']['inputPort'])]
+        return (AS[0], True)
+    return (None, False)
+
+
 
 def buildTopoHash(topo):
     thash = {}
@@ -185,6 +192,9 @@ def findFlowPaths(flows, thash, filt = 'None'):
             if (not passFilter(filt, fe, dpid)):
                 continue
             path = []
+            (AS, truth) = fromAS(dpid, fe)
+            if truth:
+                path.append(AS)
             path.append(dpid)
             port = -1
             dl_dst = None
