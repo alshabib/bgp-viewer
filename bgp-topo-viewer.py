@@ -12,8 +12,8 @@ FL_BGP = "/wm/bgp/json"
 
 NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
 
-NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:4" : (["AS1"],'00:00:00:00:00:00:00:a5',3), "00:00:00:00:00:00:00:a2:3" : (["AS2", "AS3"],'00:00:00:00:00:00:00:a6',3), \
-                "00:00:00:00:00:00:00:a6:3" : (["AS1"],'00:00:00:00:00:00:00:a3',4), "00:00:00:00:00:00:00:a6:3" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a2',3)}
+NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:3" : (["AS1"],'00:00:00:00:00:00:00:a5',3), "00:00:00:00:00:00:00:a2:3" : (["AS2", "AS3"],'00:00:00:00:00:00:00:a6',3), \
+                "00:00:00:00:00:00:00:a5:3" : (["AS1"],'00:00:00:00:00:00:00:a3',3), "00:00:00:00:00:00:00:a6:3" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a2',3)}
 
 DESC = "Collects topology and other information from Floodlight and exposes it over a webserver"
 
@@ -196,17 +196,21 @@ def findFlowPaths(flows, thash, filt = 'None'):
                 else:
                     continue
             dp = dpid
+            F_NON_OF = False
             while True:
+                F_NON_OF = False
                 if NON_OF_FLOW.has_key("%s:%s" % (dp, port)):
                    (ases, dp, port) = NON_OF_FLOW['%s:%s' % (dp,port)]
                    path.append(ases)
                    path.append(dp)
                    path = flatten(path)
                    (dp,port) = findNextHop(flows, dp, port, dl_dst)
-
+                   F_NON_OF = True
                 try:
                     (nextHop,inport) = thash[dp][port] 
                 except KeyError as e:
+                    if F_NON_OF:
+                        path.pop()
                     break
                 path.append(nextHop)
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
