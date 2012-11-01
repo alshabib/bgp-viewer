@@ -90,12 +90,15 @@ def isTraffic(flows):
 
 def do_url(url):
     request = urllib2.Request(url, None, {'Content-Type':'application/json'})
-    try:
-        response = urllib2.urlopen(request)
-        resp_text =  response.read()
-    except Exception as e:
-        print "Exception on url %s" % url, e
-        sys.exit(1)  
+    while True:
+        try:
+            response = urllib2.urlopen(request)
+            resp_text =  response.read()
+            break
+        except Exception as e:
+            debug("%s on url %s, waiting 2 secs" % (e, url))
+            time.sleep(2)
+            #sys.exit(1)  
     return json.loads(resp_text)
 
 def d3ize(sws, topo):
@@ -157,6 +160,8 @@ def determineSourceFlows(flows, thash):
 
 def findNextHop(flows, nextHop, inport, dl_dst):
     for fe in flows[nextHop]:
+         if fe['packetCount'] == 0:
+            continue
          if fe['match']['inputPort'] == inport and fe['match']['dataLayerDestination'] == dl_dst:
              for f in fe['actions']:
                  if f['type'] == 'OUTPUT':
@@ -219,7 +224,7 @@ def findFlowPaths(flows, thash, filt = 'None'):
                 try:
                     (nextHop,inport) = thash[dp][port] 
                 except KeyError as e:
-                    if F_NON_OF:
+                    if F_NON_OF and len(path) > 0:
                         path.pop()
                     break
                 path.append(nextHop)
@@ -267,9 +272,12 @@ class TopoFetcher():
             time.sleep(args.update)
 
     def update_flows(self):
-        while not self.flowupdateEvent.is_set():
-            self.fetch_flows()
-            time.sleep(args.update)
+        try:
+            while not self.flowupdateEvent.is_set():
+                self.fetch_flows()
+                time.sleep(args.update)
+        except Exception, e:
+            debug(e)
 
     def fetch_topology(self):
         topo = []
