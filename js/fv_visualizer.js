@@ -277,50 +277,60 @@ function start_demo(data_source, tag, fl_tag) {
 
     svg.append('text').text('SDN AS - AS1')
                         .attr('x', 0.4*w)
-                        .attr('y', 0.7*h);
+                        .attr('y', 0.7*h)
+                        .style('font-size','22px');
 
      svg.append('text').text('SLC')
                         .attr('x', 0.25*w)
-                        .attr('y', 0.45*h);
+                        .attr('y', 0.45*h)
+                        .style('font-size','22px');
 
     
       svg.append('text').text('LAX')
                         .attr('x', 0.06*w)
-                        .attr('y', 0.75*h);
+                        .attr('y', 0.75*h)
+                        .style('font-size','22px');
 
 
       svg.append('text').text('CHI')
                         .attr('x', 0.66*w)
-                        .attr('y', 0.40*h);
+                        .attr('y', 0.40*h)
+                        .style('font-size','22px');
 
       svg.append('text').text('IAH')
                         .attr('x', 0.55*w)
-                        .attr('y', 0.9*h);
+                        .attr('y', 0.9*h)
+                        .style('font-size','22px');
 
     
    svg.append('text').text('NYC')
                         .attr('x', 0.95*w)
-                        .attr('y', 0.5*h);
+                        .attr('y', 0.5*h)
+                        .style('font-size','22px');
 
 
     svg.append('text').text('ATL')
                         .attr('x', 0.75*w)
-                        .attr('y', 0.7*h);
+                        .attr('y', 0.7*h)
+                        .style('font-size','22px');
 
 
 
    svg.append('text').text('AS2')
                         .attr('x', 0.8*w)
-                        .attr('y', 0.25*h);
+                        .attr('y', 0.25*h)
+                        .style('font-size','22px');
 
 
    svg.append('text').text('AS3')
                         .attr('x', 0.05*w)
-                        .attr('y', 0.9*h);
+                        .attr('y', 0.9*h)
+                        .style('font-size','22px');
 
    svg.append('text').text('AS4')
                         .attr('x', 0.95*w)
-                        .attr('y', 0.9*h);
+                        .attr('y', 0.9*h)
+                        .style('font-size','22px');
 
 
 
