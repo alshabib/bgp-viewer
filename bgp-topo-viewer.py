@@ -32,7 +32,8 @@ parser.add_argument('-s', '--simple', action="store_true", help="Send bare essen
 parser.add_argument('-p', '--httpport', type=int, help="http server port", default=8000)
 parser.add_argument('-t', '--httphost', help='host on which the http server runs', default='localhost')
 parser.add_argument('-u', '--update', type=int, help='Interval to update flows', default='2')
-parser.add_argument('-f', '--filter', type=list, help='JSON filter to filter flows on', default=[ { 'networkDestination' : '172.16.20.0' }, { 'networkDestination' : '172.16.30.0' }])
+parser.add_argument('-f', '--filter', help='JSON filter to filter flows on', 
+                default="[ { 'networkDestination' : '172.16.20.0' }, { 'networkDestination' : '172.16.30.0' }]")
 parser.add_argument('servers', help="list of floodlights with format SRV:PORT",nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
@@ -272,7 +273,7 @@ class TopoFetcher():
         self.cv = threading.Condition()
         self.fcv = threading.Condition()
         self.filtcv = threading.Condition()
-        self.filt = args.filter
+        self.filt = eval(args.filter)
         self.fake_links = range(1,len(FAKES)+1)
         self.flowupdateEvent = threading.Event()
         self.topoupdateEvent = threading.Event()
