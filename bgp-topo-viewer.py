@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-import argparse
+import argparse,copy
 import json, sys, threading, os, time
 import urllib2, urlparse
 import SimpleHTTPServer, SocketServer
@@ -10,10 +10,18 @@ FL_SWS = "/wm/core/controller/switches/json"
 FL_FLOWS = "/wm/core/switch/all/flow/json"
 FL_BGP = "/wm/bgp/json"
 
-NON_SDN_AS = [ {"group" : -1, "name" : "AS1" },   {"group" : -1, "name" : "AS2" }, {"group" : -1, "name" : "AS3" } ]
+NON_SDN_AS = [ {"group" : 0, "name" : 'host' }, {"group" : -1, "name" : "AS2" },   {"group" : -2, "name" : "AS3" }, {"group" : -3, "name" : "AS4" } ]
 
-NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:4" : (["AS1"],'00:00:00:00:00:00:00:a5',3), "00:00:00:00:00:00:00:a2:3" : (["AS2", "AS3"],'00:00:00:00:00:00:00:a6',3), \
-                "00:00:00:00:00:00:00:a5:3" : (["AS1"],'00:00:00:00:00:00:00:a3',4), "00:00:00:00:00:00:00:a6:3" : (["AS3", "AS2"],'00:00:00:00:00:00:00:a2',3)}
+NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:4" : (["AS2"],'00:00:00:00:00:00:00:a5',3), "00:00:00:00:00:00:00:a2:3" : (["AS3", "AS4"],'00:00:00:00:00:00:00:a6',3), \
+                "00:00:00:00:00:00:00:a5:3" : (["AS2"],'00:00:00:00:00:00:00:a3',4), "00:00:00:00:00:00:00:a6:3" : (["AS4", "AS3"],'00:00:00:00:00:00:00:a2',3)}
+
+FAKES = [ {"source" : "00:00:00:00:00:00:00:a3", "target" : "AS2" },
+          {"target" : "00:00:00:00:00:00:00:a5", "source" : "AS2" },
+          {"source" : "00:00:00:00:00:00:00:a2", "target" : "AS3" },
+          {"source" : "AS3", "target" : "AS4" },
+          {"source" : "AS4", "target" : "00:00:00:00:00:00:00:a6" },
+          {"source" : "host", "target" : "00:00:00:00:00:00:00:a1" }]
+
 
 DESC = "Collects topology and other information from Floodlight and exposes it over a webserver"
 
@@ -24,6 +32,7 @@ parser.add_argument('-s', '--simple', action="store_true", help="Send bare essen
 parser.add_argument('-p', '--httpport', type=int, help="http server port", default=8000)
 parser.add_argument('-t', '--httphost', help='host on which the http server runs', default='localhost')
 parser.add_argument('-u', '--update', type=int, help='Interval to update flows', default='2')
+parser.add_argument('-f', '--filter', type=list, help='JSON filter to filter flows on', default=[ { 'networkDestination' : '172.16.20.0' }, { 'networkDestination' : '172.16.30.0' }])
 parser.add_argument('servers', help="list of floodlights with format SRV:PORT",nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
@@ -101,23 +110,22 @@ def do_url(url):
             #sys.exit(1)  
     return json.loads(resp_text)
 
-def d3ize(sws, topo):
+def d3ize(sws, topo, fake_links):
     d3_dict = {}
     if args.simple:
         nodes = NON_SDN_AS
-        node_index = ["AS1", "AS2", "AS3"]
+        node_index = ["host", "AS2", "AS3", "AS4"]
         for group in range(len(sws)):
             nodes = nodes + [ { "group" : group, "name" : sw['dpid'] } for sw in sws[group] ]
             node_index = node_index + [ sw['dpid'] for sw in sws[group] ] 
         d3_dict['nodes'] = nodes
         links = [ { "source" : node_index.index(link["src-switch"]), "target" : node_index.index(link["dst-switch"]) } for link in topo ]
-        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a3"), "target" : node_index.index("AS1") })
-        links.append({"target" : node_index.index("00:00:00:00:00:00:00:a5"), "source" : node_index.index("AS1") })
-        links.append({"source" : node_index.index("00:00:00:00:00:00:00:a2"), "target" : node_index.index("AS2") })
-        links.append({"source" : node_index.index("AS2"), "target" : node_index.index("AS3") })
-        links.append({"source" : node_index.index("AS3"), "target" : node_index.index("00:00:00:00:00:00:00:a6") })
-        for i,link in enumerate(links):
-            links[i]['id'] = i
+        for i, l in enumerate(FAKES):
+            if (i+1) in fake_links:
+                link = copy.copy(l)
+                link['source'] = node_index.index(link['source'])
+                link['target'] = node_index.index(link['target'])
+                links.append(link)
         d3_dict["links"] = links     
     else:
         pass
@@ -130,7 +138,10 @@ def fromAS(dpid, fe):
         return (AS[0], True)
     return (None, False)
 
-
+def isA1(value):
+    if value == '00:00:00:00:00:00:00:a1':
+        return True
+    return False
 
 def buildTopoHash(topo):
     thash = {}
@@ -191,7 +202,7 @@ def passFilter(filt, fe, dpid):
         ret = ret | attrs
     return ret
 
-ENDS = { '172.16.20.0' : 'AS1', '172.16.30.0' : 'AS2', '172.16.40.0' : 'AS3' }
+ENDS = { '172.16.20.0' : 'AS2', '172.16.30.0' : 'AS3', '172.16.40.0' : 'AS4' }
 
 
 def findEndingAS(ip):
@@ -245,7 +256,11 @@ def findFlowPaths(flows, thash, filt = 'None'):
                 path.append(nextHop)
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
             while len(path) > 0 and fAS != None and path[-1] != fAS:
-                path.pop()       
+                path.pop()
+            if (isA1(path[0])):
+                path = ['host'] + path;
+            if (isA1(path[-1])):
+                path.append('host')
             paths.append(path)
     return paths
     
@@ -257,7 +272,8 @@ class TopoFetcher():
         self.cv = threading.Condition()
         self.fcv = threading.Condition()
         self.filtcv = threading.Condition()
-        self.filt = 'None'
+        self.filt = args.filter
+        self.fake_links = range(1,len(FAKES)+1)
         self.flowupdateEvent = threading.Event()
         self.topoupdateEvent = threading.Event()
         self.flowupdate = threading.Thread(target=self.update_flows)
@@ -309,7 +325,7 @@ class TopoFetcher():
             self.cv.acquire()
             topo.sort()
             self.d3_dict = None
-            (self.node_index, self.d3_dict) = d3ize(sws, topo)
+            (self.node_index, self.d3_dict) = d3ize(sws, topo, self.fake_links)
             self.cv.notify()
             self.cv.release()
 
@@ -344,6 +360,33 @@ class TopoFetcher():
             self.bgps = bgps  
             self.fcv.notify()
             self.fcv.release()
+
+    def uplink(self, no):
+        linkno = int(no)
+        if linkno > 0 and linkno <= len(FAKES):
+            self.cv.acquire()
+            while self.d3_dict == None:
+                self.cv.wait()
+            if linkno not in self.fake_links:
+                self.fake_links.append(linkno)
+            self.cv.release()
+            return True
+        else:
+            return False
+
+    def downlink(self, no):
+        linkno = int(no)
+        if linkno > 0 and linkno <= len(FAKES):
+            self.cv.acquire()
+            while self.d3_dict == None:
+                self.cv.wait()
+            if linkno in self.fake_links:
+                self.fake_links.remove(linkno)
+            self.cv.release()
+            return True
+        else:
+            return False
+
 
     def getTopology(self):
         self.cv.acquire()
@@ -422,7 +465,14 @@ class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 self.send_response(404)
             return
         if self.path.startswith("/downlink"):
-            linkno = self.path.split('/')[-1];
+            linkno = self.path.split('/')[-1]
+            resp = self.topo().downlink(linkno)
+            self.send_resp(resp)
+            return
+        if self.path.startswith("/uplink"):
+            linkno = self.path.split('/')[-1]
+            resp = self.topo().uplink(linkno)
+            self.send_resp(resp)
             return
         if self.path.startswith("/topology"):
             resp = self.topo().getTopology()

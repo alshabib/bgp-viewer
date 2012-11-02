@@ -108,9 +108,10 @@ function setRegularLayout(){
   layout['00:00:00:00:00:00:00:a4'] = [.55, .85];
   layout['00:00:00:00:00:00:00:a5'] = [.9, .5];
   layout['00:00:00:00:00:00:00:a6'] = [.75, 3/4]; 
-  layout['AS1'] = [.8, 0.3];
-  layout['AS2'] = [1/10, 0.95];
-  layout['AS3'] = [9/10, 0.95];
+  layout['AS2'] = [.8, 0.3];
+  layout['AS3'] = [1/10, 0.95];
+  layout['AS4'] = [9/10, 0.95];
+  layout['host'] = [1/8, 1/2];  
 
   layout['00:00:00:00:00:00:00:b1'] = [9/10, 2/5];
   layout['00:00:00:00:00:00:00:b2'] = [9/10, 4/5];
@@ -125,6 +126,24 @@ function setRegularLayout(){
   return layout;
 }
 var layout = setRegularLayout();
+
+function setSwitchNames() {
+    var names = {}   
+    names['00:00:00:00:00:00:00:a1'] = 'SLC';
+    names['00:00:00:00:00:00:00:a2'] = 'LAX';
+    names['00:00:00:00:00:00:00:a3'] = 'CHI';
+    names['00:00:00:00:00:00:00:a4'] = 'IAH';
+    names['00:00:00:00:00:00:00:a5'] = 'NYC';
+    names['00:00:00:00:00:00:00:a6'] = 'ATL';
+    names['AS2'] = 'AS2';
+    names['AS3'] = 'AS3';
+    names['AS4'] = 'AS4';
+    names['host'] = 'The Source of Everything';
+    return names;
+}
+var names = setSwitchNames();
+
+
 
 
 var m = [10, 60, 10, 60],
@@ -180,25 +199,33 @@ function start_demo(data_source, tag, fl_tag) {
       
       var bgp_groups = d3.nest().key(function(d) { return d.group; }).entries(bgp_nodes);  
       
-     /* var groupPath = function(d) {
+      var groupPath = function(d) {
         return "M" + 
         d3.geom.hull(d.values.map(function(i) {
                 if (i.name.indexOf("a1") != -1) {
-                    return [i.x, i.y ];
+                    return [i.x , i.y  ];
                 }
                 if (i.name.indexOf("a2") != -1) {
-                    return [i.x, i.y + image_size];
+                    return [i.x +image_size/2, i.y+image_size/2];
                 }
-                if (i.name.indexOf("b1") != -1) {
-                    return [i.x + image_size, i.y ];
+                if (i.name.indexOf("a3") != -1) {
+                    return [i.x+image_size/2, i.y +image_size];
                 }
-                 if (i.name.indexOf("b2") != -1) {
-                    return [i.x + image_size, i.y + image_size ];
+                if (i.name.indexOf("a4") != -1) {
+                    return [i.x+image_size/2, i.y+image_size  ];
                 }
+                if (i.name.indexOf("a5") != -1) {
+                    return [i.x + image_size, i.y+image_size/2  ];
+                }
+                if (i.name.indexOf("a6") != -1) {
+                    return [i.x+image_size/2, i.y+image_size/2  ];
+                }
+
+                
                 return [i.x + image_size/2, i.y + image_size / 2]; }))
             .join("L")
         + "Z";
-    };*/
+    };
 
     var bgp_groupPath = function(d) {
         var ret = "M"
@@ -236,6 +263,9 @@ function start_demo(data_source, tag, fl_tag) {
             links.push(item);
         });
 
+        var groups = d3.nest().key(function(d) { return d.group; }).entries(nodes);
+
+
         force.start();
     
      /* var link = svg.selectAll("line")
@@ -245,6 +275,9 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("stroke-width",2)
           .attr("id", function(d){return d.id;});*/
 
+    svg.append('text').text('SDN AS - AS1')
+                        .attr('x', 0.4*w)
+                        .attr('y', 0.7*h);
     
       update_topo();
       var node = svg.selectAll("g.node")
@@ -252,16 +285,18 @@ function start_demo(data_source, tag, fl_tag) {
         .enter().append("svg:g")
           .attr("class", "node")
          .append("svg:image")
-          .attr("xlink:href", function(d) {if (d.name.indexOf("AS") != -1) { return "images/cloud.png"; } else { return  "images/router.png"; } } )
+          .attr("xlink:href", function(d) {
+                if (d.name.indexOf("AS") != -1) { 
+                    return "images/cloud.png"; 
+                } else if (d.name.indexOf("00:00") != -1) { 
+                    return  "images/router.png"; 
+                } else {
+                    return "images/host.png";
+                }
+             } )
           .attr("width", image_size + "px")
           .attr("height", image_size + "px")
-          .attr("id", function(d){ 
-                 if (d.name.indexOf("AS") != -1) { 
-                    return d.name; 
-                 } else { 
-                    return d.name.split(":").pop();
-                 }
-          })
+          .attr("id", function(d){ return names[d.name]; })
           .on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
         .call(force.drag);
 
@@ -295,7 +330,7 @@ function start_demo(data_source, tag, fl_tag) {
             .attr("x2", function(d) { return d.target.x+image_size/2; })
             .attr("y2", function(d) { return d.target.y+image_size/2; });
 
-        /*svg.selectAll("path").data(groups)
+        svg.selectAll("path").data(groups)
             .attr("d", groupPath)
            .enter().insert("path", "g")
             .style("fill", groupFill)
@@ -303,7 +338,7 @@ function start_demo(data_source, tag, fl_tag) {
             .style("stroke-width", 40)
             .style("stroke-linejoin", "round")
             .style("opacity", .2)
-            .attr("d", groupPath);*/
+            .attr("d", groupPath);
 
         svg.selectAll("bgp_path").data(bgp_groups)
            .enter().insert("path", "g")
@@ -356,13 +391,15 @@ function start_demo(data_source, tag, fl_tag) {
 
 
           var packet = null;
-          for (var j = 0 ; j < 13 ; j++) {
+          for (var j = 0 ; j < 7 ; j++) {
             packet = svg.append("rect")
-                .attr("height", 5)
-                .attr("width", 5)
-                //.style("opacity",0.8)
-                .style("fill", packetFill(i))
-                .transition().duration(5000).delay((i*750)+(j*75)).ease("linear")
+                .attr("height", 10)
+                .attr("width", 10)
+                .attr("x", -10)
+                .attr("y", -10)
+                .style("opacity",0.8)
+                .style("fill", 'orangered')
+                .transition().duration(5000).delay((i*250)+(j*150)).ease("linear")
                 .attrTween("transform", translateAlong(path.node()))
                 .each("end", function() { 
                             d3.select(this).remove();
@@ -413,7 +450,8 @@ function start_demo(data_source, tag, fl_tag) {
 
         for (var i = 0; i < l_rems.length ; i++) {
             for (var j = 0; j < links.length; j++) {
-                if (links[j].id == l_rems[i].id) {
+                if (links[j].source.index == l_rems[i].source.index &&
+                               links[j].target.index == l_rems[i].target.index) {
                     links.splice(j,1);
                     changed = true;
                     break;
@@ -500,7 +538,9 @@ function start_demo(data_source, tag, fl_tag) {
 
 
 function drawTree(json, togg) {
+    
   root = json;
+  root['name'] = names[root['name']];
   root.x0 = th / 2;
   root.y0 = 0;
 
