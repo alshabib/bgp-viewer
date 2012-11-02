@@ -258,9 +258,9 @@ def findFlowPaths(flows, thash, filt = 'None'):
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
             while len(path) > 0 and fAS != None and path[-1] != fAS:
                 path.pop()
-            if (isA1(path[0])):
+            if (len(path) > 0 and isA1(path[0])):
                 path = ['host'] + path;
-            if (isA1(path[-1])):
+            if (len(path) > 0 and isA1(path[-1])):
                 path.append('host')
             paths.append(path)
     return paths
