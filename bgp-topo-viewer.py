@@ -305,13 +305,13 @@ class TopoFetcher():
             time.sleep(args.update)
 
     def update_flows(self):
-        try:
             while not self.flowupdateEvent.is_set():
-                self.fetch_flows()
-                time.sleep(args.update)
-        except Exception, e:
-            print "Unexpected error:", traceback.print_tb(sys.exc_info()[2])
-            debug(e)
+                try:
+                    self.fetch_flows()
+                    time.sleep(args.update)
+                except Exception, e:
+                    print "Unexpected error:", traceback.print_tb(sys.exc_info()[2])
+                    debug(e)
 
     def fetch_topology(self):
         topo = []
