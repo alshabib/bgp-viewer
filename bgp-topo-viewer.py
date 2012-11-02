@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-import argparse,copy
+import argparse,copy, traceback
 import json, sys, threading, os, time
 import urllib2, urlparse
 import SimpleHTTPServer, SocketServer
