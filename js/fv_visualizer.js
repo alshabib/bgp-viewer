@@ -138,7 +138,7 @@ function setSwitchNames() {
     names['AS2'] = 'AS2';
     names['AS3'] = 'AS3';
     names['AS4'] = 'AS4';
-    names['host'] = 'The Source of Everything';
+    names['host'] = "Guru's Machine";
     return names;
 }
 var names = setSwitchNames();
@@ -278,7 +278,52 @@ function start_demo(data_source, tag, fl_tag) {
     svg.append('text').text('SDN AS - AS1')
                         .attr('x', 0.4*w)
                         .attr('y', 0.7*h);
+
+     svg.append('text').text('SLC')
+                        .attr('x', 0.25*w)
+                        .attr('y', 0.45*h);
+
     
+      svg.append('text').text('LAX')
+                        .attr('x', 0.06*w)
+                        .attr('y', 0.75*h);
+
+
+      svg.append('text').text('CHI')
+                        .attr('x', 0.66*w)
+                        .attr('y', 0.40*h);
+
+      svg.append('text').text('IAH')
+                        .attr('x', 0.55*w)
+                        .attr('y', 0.9*h);
+
+    
+   svg.append('text').text('NYC')
+                        .attr('x', 0.95*w)
+                        .attr('y', 0.5*h);
+
+
+    svg.append('text').text('ATL')
+                        .attr('x', 0.75*w)
+                        .attr('y', 0.7*h);
+
+
+
+   svg.append('text').text('AS2')
+                        .attr('x', 0.8*w)
+                        .attr('y', 0.25*h);
+
+
+   svg.append('text').text('AS3')
+                        .attr('x', 0.05*w)
+                        .attr('y', 0.9*h);
+
+   svg.append('text').text('AS4')
+                        .attr('x', 0.95*w)
+                        .attr('y', 0.9*h);
+
+
+
       update_topo();
       var node = svg.selectAll("g.node")
           .data(nodes)
