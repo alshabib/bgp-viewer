@@ -310,6 +310,7 @@ class TopoFetcher():
                 self.fetch_flows()
                 time.sleep(args.update)
         except Exception, e:
+            print "Unexpected error:", sys.exc_info()
             debug(e)
 
     def fetch_topology(self):
