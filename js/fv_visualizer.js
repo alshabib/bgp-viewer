@@ -287,7 +287,7 @@ function start_demo(data_source, tag, fl_tag) {
 
     
       svg.append('text').text('LAX')
-                        .attr('x', 0.06*w)
+                        .attr('x', 0.04*w)
                         .attr('y', 0.75*h)
                         .style('font-size','22px');
 
@@ -310,8 +310,8 @@ function start_demo(data_source, tag, fl_tag) {
 
 
     svg.append('text').text('ATL')
-                        .attr('x', 0.75*w)
-                        .attr('y', 0.7*h)
+                        .attr('x', 0.72*w)
+                        .attr('y', 0.8*h)
                         .style('font-size','22px');
 
 
@@ -344,7 +344,7 @@ function start_demo(data_source, tag, fl_tag) {
                 if (d.name.indexOf("AS") != -1) { 
                     return "images/cloud.png"; 
                 } else if (d.name.indexOf("00:00") != -1) { 
-                    return  "images/router.png"; 
+                    return  "images/switch.png"; 
                 } else {
                     return "images/host.png";
                 }
