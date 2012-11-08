@@ -304,8 +304,8 @@ function start_demo(data_source, tag, fl_tag) {
 
     
    svg.append('text').text('NYC')
-                        .attr('x', 0.95*w)
-                        .attr('y', 0.5*h)
+                        .attr('x', 0.8*w)
+                        .attr('y', 0.55*h)
                         .style('font-size','22px');
 
 
@@ -317,8 +317,8 @@ function start_demo(data_source, tag, fl_tag) {
 
 
    svg.append('text').text('AS2')
-                        .attr('x', 0.8*w)
-                        .attr('y', 0.25*h)
+                        .attr('x', 0.78*w)
+                        .attr('y', 0.4*h)
                         .style('font-size','22px');
 
 
@@ -328,8 +328,8 @@ function start_demo(data_source, tag, fl_tag) {
                         .style('font-size','22px');
 
    svg.append('text').text('AS4')
-                        .attr('x', 0.95*w)
-                        .attr('y', 0.9*h)
+                        .attr('x', 0.8*w)
+                        .attr('y', 0.95*h)
                         .style('font-size','22px');
 
     function im_size(d) {
