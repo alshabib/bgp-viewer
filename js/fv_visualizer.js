@@ -98,7 +98,7 @@ function getFlows(data_source, tag, dpid) {
 
 function setRegularLayout(){
   var layout = {};
-  layout['SDNBGP1'] = [6/10, 1/10];
+  layout['SDNBGP1'] = [4/10, 2/10];
   layout['SDNBGP2'] = [9/10, 1/10]; 
   layout['FloodLight-1'] = [4/10, 1/10];
   layout['FloodLight-2'] = [7/10, 1/10];
@@ -108,9 +108,9 @@ function setRegularLayout(){
   layout['00:00:00:00:00:00:00:a4'] = [.55, .85];
   layout['00:00:00:00:00:00:00:a5'] = [.9, .5];
   layout['00:00:00:00:00:00:00:a6'] = [.75, 3/4]; 
-  layout['AS2'] = [.8, 0.3];
-  layout['AS3'] = [1/10, 0.95];
-  layout['AS4'] = [9/10, 0.95];
+  layout['AS2'] = [.78, 0.28];
+  layout['AS3'] = [0.05, 0.9];
+  layout['AS4'] = [.88, 0.9];
   layout['host'] = [1/8, 1/2];  
 
   layout['00:00:00:00:00:00:00:b1'] = [9/10, 2/5];
@@ -190,7 +190,7 @@ function start_demo(data_source, tag, fl_tag) {
 
       //var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
 
-      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "FloodLight-1", "group" : "0" } ]
+      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" } ]//, { "name" : "FloodLight-1", "group" : "0" } ]
 
       //var nodes = json.nodes.map(Object);
       //var links = json.links.map(Object);
@@ -298,8 +298,8 @@ function start_demo(data_source, tag, fl_tag) {
                         .style('font-size','22px');
 
       svg.append('text').text('IAH')
-                        .attr('x', 0.55*w)
-                        .attr('y', 0.9*h)
+                        .attr('x', 0.5*w)
+                        .attr('y', 0.8*h)
                         .style('font-size','22px');
 
     
@@ -323,14 +323,23 @@ function start_demo(data_source, tag, fl_tag) {
 
 
    svg.append('text').text('AS3')
-                        .attr('x', 0.05*w)
-                        .attr('y', 0.9*h)
+                        .attr('x', 0.03*w)
+                        .attr('y', 0.87*h)
                         .style('font-size','22px');
 
    svg.append('text').text('AS4')
                         .attr('x', 0.95*w)
                         .attr('y', 0.9*h)
                         .style('font-size','22px');
+
+    function im_size(d) {
+        if (d.name.indexOf("AS") != -1) { 
+            return 1.5*image_size + "px"
+        } else {
+            return image_size + "px";
+        }
+    }
+        
 
 
 
@@ -342,15 +351,15 @@ function start_demo(data_source, tag, fl_tag) {
          .append("svg:image")
           .attr("xlink:href", function(d) {
                 if (d.name.indexOf("AS") != -1) { 
-                    return "images/cloud.png"; 
+                    return "images/AS-ICON.png"; 
                 } else if (d.name.indexOf("00:00") != -1) { 
                     return  "images/switch.png"; 
                 } else {
                     return "images/host.png";
                 }
              } )
-          .attr("width", image_size + "px")
-          .attr("height", image_size + "px")
+          .attr("width", function(d) {return im_size(d);} )
+          .attr("height", function (d) {return im_size(d); } )
           .attr("id", function(d){ return names[d.name]; })
           .on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
         .call(force.drag);
@@ -360,9 +369,9 @@ function start_demo(data_source, tag, fl_tag) {
         .enter().append("svg:g")
           .attr("class", "node")
           .append("svg:image") 
-          .attr("xlink:href", function(d) {if (d.name.indexOf("FloodLight") != -1) { return "images/floodlight.png"; } else { return  "images/bgpd.png";  }} )
-          .attr("width", function (d) { if (d.name.indexOf("FloodLight") != -1) { return 2*image_size + "px"; } else { return  image_size + "px";  }})
-          .attr("height", image_size + "px")
+          .attr("xlink:href", function(d) {if (d.name.indexOf("FloodLight") != -1) { return "images/floodlight.png"; } else { return  "images/BGP-ICON.png";  }} )
+          .attr("width", function (d) { if (d.name.indexOf("FloodLight") != -1) { return 2*image_size + "px"; } else { return  3*image_size + "px";  }})
+          .attr("height", 3*image_size + "px")
           .attr("x", function(d) { return (w * layout[d.name][0]) - image_size/2; } )
           .attr("y", function(d) { return (h * layout[d.name][1]) - image_size/2; } )
           .attr("id", function(d){return d.name;})
