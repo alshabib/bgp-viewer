@@ -1,67 +1,50 @@
-<!DOCTYPE html>
 <html>
-  <head>
-    <title>Demo</title>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <script type="text/javascript" src="js/d3.v2.js"></script>
+
+<head>
+	<link rel="stylesheet" href="css/layout.default.css" type="text/css"/>
+	<link rel="stylesheet" href="css/skin.default.css" type="text/css"/>
+	<script src="js/d3.v2.js" charset="utf-8"></script>
     <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="js/jquery.tipsy.js"></script>
-    <script type="text/javascript" src="fancybox/jquery.fancybox-1.3.4.pack.js"></script>
     <script type="text/javascript" src="js/fv_visualizer.js"></script>
     <link href="css/tipsy.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="fancybox/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
-    <link href="css/demo.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <div class="graphs">
-      <div id="paper1" class="paper">
-        <div class=label>BGP in an SDN World</div>
-        <div id=topology></div>
-      </div>
-     <div id="paper2" class="paper">
-        <div class=label>Filter</div>
-        <div id=filter style="height:400px;width:400px">
-            <form name="filter" method="post"  onSubmit="return false;">
-            <textarea  name="data" rows="50" cols="40" style="height:350px;width:350px"> 
-   Enter filter as a json formatted string with FloodLight style markers. Filter elements should be entered as a list and each list element should be a dictionary.
-   List elements are or'd against the set of flow rules and the dictionary entries are and'd against each flowentry. Also keywords like (use quotes) 'all' and 'None', will respectively show all and none of the flows.
+</head>
 
-For example:
-   [ { 'networkDestination' : '192.168.30.0' } ] will show all flows with IP destination 192.168.30.0
+<body>
 
-            
-             </textarea>
-            <input type="submit" value="Apply!" id="submit" />
-            </form>
-        </div>
-      </div>
+<div id='columns'>
+	<div id='left'>
+		<div class='header'>
+			<img id='logo' src='images/logo.png'></img>
+		</div>
+		<div id='controllers'>
+			<div class='header'>Link Control</div>
+			<div id='controllerList'></div>
+		</div>
+	</div>
 
-    </div>
-    <div class="graphs">
-      <div id="paper1" class="paper">
-        <div class=label>FlowTable</div>
-        <div id=flowtable style="height:400px;width:1200px"></div>
-      </div>
-    </div>
-    <div class="panel">
-    </div>
-    <div class="spinner">
-        <div class="bar1"></div>
-        <div class="bar2"></div>
-        <div class="bar3"></div>
-        <div class="bar4"></div>
-        <div class="bar5"></div>
-        <div class="bar6"></div>
-        <div class="bar7"></div>
-        <div class="bar8"></div>
-        <div class="bar9"></div>
-        <div class="bar10"></div>
-        <div class="bar11"></div>
-        <div class="bar12"></div>
-    </div>
-    <script type="text/javascript">
+	<div id='right'>
+		<div class='header'>
+			<div id='traceButton' class='button'>Trace</div>
+			<div id='lastUpdated' class='status top'><span class='static'>Last updated:</span><span id='lastUpdate' class='dynamic'>Mon Mar 18 11:11:12 PDT 2013</span></div>
+		</div>
+
+		<div id='topology'>
+            <div id='bgproutes' class='controllerLine'>
+                <a id="routes" href="#" title="None">ONOS1</a>
+            </div>
+			<div id='svg-container'></div>
+            <div id='iperf'> </div>
+		</div>
+	</div>
+</div>
+
+<!--<div id='iperf'>
+</div>-->
+<script type="text/javascript">
     reset();
-    start_demo("http://localhost:8000", "#topology", "#flowtable");
-    </script>
-  </body>
+    start_demo("http://localhost:8000", "#svg-container", "#topology");
+</script>
+</body>
+
 </html>

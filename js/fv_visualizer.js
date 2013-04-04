@@ -31,6 +31,20 @@ function getHTML(data) {
     });
 }
 
+function getRoutes(data_source) {
+     var ret = "";
+     $.ajax({
+           url: data_source + '/bgp1',
+           dataType: 'json',
+           async: false,
+           success:  function (data) {
+               ret = getHTML(data);
+          
+           }
+        });
+     return ret.html();
+}
+
 function setTipsy(tag, data_source) {
     $(tag + ' svg image').tipsy({ 
           //trigger: 'manual',
@@ -69,7 +83,7 @@ function setTipsy(tag, data_source) {
 
             }  
             else {
-                return name
+                return name;
             }
           }   
     });   
@@ -143,8 +157,23 @@ function setSwitchNames() {
 }
 var names = setSwitchNames();
 
-
-
+function setConnections() {
+    var cons = new Array()
+    cons[0] = {'id' : 0, 'name' : 'LAX-SLC'};
+    cons[1] = {'id' : 1, 'name' : 'LAX-IAH'};
+    cons[2] = {'id' : 2, 'name' : 'LAX-AS3'};
+    cons[3] = {'id' : 3, 'name' : 'SLC-CHI'};
+    cons[4] = {'id' : 4, 'name' : 'CHI-AS2'};
+    cons[5] = {'id' : 5, 'name' : 'CHI-NYC'};
+    cons[6] = {'id' : 6, 'name' : 'CHI-IAH'};
+    cons[7] = {'id' : 7, 'name' : 'AS2-NYC'};
+    cons[8] = {'id' : 8, 'name' : 'NYC-ATL'};
+    cons[9] = {'id' : 9, 'name' : 'ATL-AS4'};
+    cons[9] = {'id' : 10, 'name' : 'ATL-LAX'};
+    cons[10] = {'id' : 11, 'name' : 'AS3-AS4'};
+    return cons;
+}
+var cons = setConnections(); 
 
 var m = [10, 60, 10, 60],
     tw = 1280 - m[1] - m[3],
@@ -158,24 +187,69 @@ var tree = d3.layout.tree()
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
+function flipLink(state, id) {
+    console.log(id + " is " + state);
+}
+
 function start_demo(data_source, tag, fl_tag) {
 
 
-    var h = 800, w = 1200;//window.innerHeight - 150, w = window.innerWidth - 100;        
+    var h = 650, w = 900;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
     var fill = d3.scale.category10();
     var pfill = d3.scale.category20();
-    var bgmap = { 'background-repeat' : 'no-repeat', 'background-attachment': 'fixed', 'background-position':'10% 25%', 'background-image' : 'url(images/usa.png)', 'background-size' : '1200px 700px' }; 
+    var bgmap = { 'background-repeat' : 'no-repeat', 'background-attachment': 'fixed', 'background-position':'15% 27%', 'background-image' : 'url(images/usa.png)', 'background-size' : '900px 650px' }; 
 
 
-    $("#topology").css(bgmap);  
+    d3.select('#controllerList').selectAll('p')
+    .data(cons)
+    .enter()
+    .append('p')
+    .append('label').attr("class", "header")
+    .text(function(d) { return d.name; })
+    .append("input")
+    .attr("checked", true)
+    .attr("type", "checkbox")
+    .attr("id", function(d,i) { return d.id; })
+    .on("click", function(d) {
+            flipLink(!this.checked, d.id);
+    });
 
-    vis = d3.select(fl_tag).append("svg:svg")
-    .attr("width", tw + m[1] + m[3])
-    .attr("height", th + m[0] + m[2])
-  .append("svg:g")
-    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+    $(tag).css(bgmap);  
 
+    setTimeout("setTipsy(\'"+fl_tag+"\',\'"+data_source+"\')", 3000);
+//    vis = d3.select(fl_tag).append("svg:svg")
+//    .attr("width", tw + m[1] + m[3])
+//    .attr("height", th + m[0] + m[2])
+//  .append("svg:g")
+//    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+    var timer;
+
+    /*var bgproute = d3.select('#bgproutes')
+        .append('a').attr("xlink:href", "#").attr("id", "routes").attr("title", "None")
+        .text('ONOS1');*/
+
+    //setTipsy('#routes', data_source);
+    //$('#routes').tipsy({trigger:'manual',gravity:'w', html:true, title: getRoutes(data_source)});
+    
+    $('#routes').tipsy({gravity:$.fn.tipsy.autoNS, html:true, fade:true, title: function() {
+        return getRoutes(data_source);    
+    }  }); 
+    
+    $('#routes').bind('mouseover',function(e){
+       $(this).tipsy('show');
+       //timer = setTimeout("$('#routes').tipsy('hide');",3000);
+    });
+
+        
+    $('.tipsy').live('mouseover',function(e){
+        clearTimeout(timer);
+    });
+    $('.tipsy').live('mouseout',function(e){
+        $('#routes').tipsy('hide');
+        clearTimeout(timer);
+    });
 
 
     var svg = d3.select(tag).append("svg:svg")
@@ -184,13 +258,11 @@ function start_demo(data_source, tag, fl_tag) {
 
     d3.json(data_source + '/topology', draw);
     
-    setTimeout("setTipsy(\'"+tag+"\',\'"+data_source+"\')", 3000); 
- 
     function draw(json) {
 
       //var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
 
-      var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" } ]//, { "name" : "FloodLight-1", "group" : "0" } ]
+      var bgp_nodes = [ ]//{ "name" : "SDNBGP1", "group" : "0" } ]//, { "name" : "FloodLight-1", "group" : "0" } ]
 
       //var nodes = json.nodes.map(Object);
       //var links = json.links.map(Object);
@@ -361,7 +433,7 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("width", function(d) {return im_size(d);} )
           .attr("height", function (d) {return im_size(d); } )
           .attr("id", function(d){ return names[d.name]; })
-          .on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
+          //.on("click", function(d) { getFlows(data_source, fl_tag, d.name); })
         .call(force.drag);
 
       var bgp_node = svg.selectAll("node")
