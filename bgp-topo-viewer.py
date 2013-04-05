@@ -9,8 +9,8 @@ FL_TOPO = "/wm/topology/links/json"
 FL_SWS = "/wm/core/controller/switches/json"
 FL_FLOWS = "/wm/core/switch/all/flow/json"
 FL_BGP = "/wm/bgp/json"
-
-NON_SDN_AS = [ {"group" : 0, "name" : 'host' }, {"group" : -1, "name" : "AS2" },   {"group" : -2, "name" : "AS3" }, {"group" : -3, "name" : "AS4" } ]
+#{"group" : 0, "name" : 'host' }, 
+NON_SDN_AS = [ {"group" : -1, "name" : "AS2" },   {"group" : -2, "name" : "AS3" }, {"group" : -3, "name" : "AS4" } ]
 
 NON_OF_FLOW = {"00:00:00:00:00:00:00:a3:4" : (["AS2"],'00:00:00:00:00:00:00:a5',3), "00:00:00:00:00:00:00:a2:3" : (["AS3", "AS4"],'00:00:00:00:00:00:00:a6',3), \
                 "00:00:00:00:00:00:00:a5:3" : (["AS2"],'00:00:00:00:00:00:00:a3',4), "00:00:00:00:00:00:00:a6:3" : (["AS4", "AS3"],'00:00:00:00:00:00:00:a2',3)}
@@ -19,8 +19,8 @@ FAKES = [ {"source" : "00:00:00:00:00:00:00:a3", "target" : "AS2" },
           {"target" : "00:00:00:00:00:00:00:a5", "source" : "AS2" },
           {"source" : "00:00:00:00:00:00:00:a2", "target" : "AS3" },
           {"source" : "AS3", "target" : "AS4" },
-          {"source" : "AS4", "target" : "00:00:00:00:00:00:00:a6" },
-          {"source" : "host", "target" : "00:00:00:00:00:00:00:a1" }]
+          {"source" : "AS4", "target" : "00:00:00:00:00:00:00:a6" }]
+          #{"source" : "host", "target" : "00:00:00:00:00:00:00:a1" }]
 
 
 DESC = "Collects topology and other information from Floodlight and exposes it over a webserver"
@@ -115,7 +115,7 @@ def d3ize(sws, topo, fake_links):
     d3_dict = {}
     if args.simple:
         nodes = NON_SDN_AS
-        node_index = ["host", "AS2", "AS3", "AS4"]
+        node_index = [ "AS2", "AS3", "AS4"]
         for group in range(len(sws)):
             nodes = nodes + [ { "group" : group, "name" : sw['dpid'] } for sw in sws[group] ]
             node_index = node_index + [ sw['dpid'] for sw in sws[group] ] 
@@ -258,10 +258,10 @@ def findFlowPaths(flows, thash, filt = 'None'):
                 (dp, port) = findNextHop(flows, nextHop, inport, dl_dst)
             while len(path) > 0 and fAS != None and path[-1] != fAS:
                 path.pop()
-            if (len(path) > 0 and isA1(path[0])):
-                path = ['host'] + path;
-            if (len(path) > 0 and isA1(path[-1])):
-                path.append('host')
+            #if (len(path) > 0 and isA1(path[0])):
+            #    path = ['host'] + path;
+            #if (len(path) > 0 and isA1(path[-1])):
+            #    path.append('host')
             paths.append(path)
     return paths
     

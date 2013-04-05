@@ -159,18 +159,18 @@ var names = setSwitchNames();
 
 function setConnections() {
     var cons = new Array()
-    cons[0] = {'id' : 0, 'name' : 'LAX-SLC'};
-    cons[1] = {'id' : 1, 'name' : 'LAX-IAH'};
-    cons[2] = {'id' : 2, 'name' : 'LAX-AS3'};
-    cons[3] = {'id' : 3, 'name' : 'SLC-CHI'};
-    cons[4] = {'id' : 4, 'name' : 'CHI-AS2'};
-    cons[5] = {'id' : 5, 'name' : 'CHI-NYC'};
-    cons[6] = {'id' : 6, 'name' : 'CHI-IAH'};
-    cons[7] = {'id' : 7, 'name' : 'AS2-NYC'};
-    cons[8] = {'id' : 8, 'name' : 'NYC-ATL'};
-    cons[9] = {'id' : 9, 'name' : 'ATL-AS4'};
-    cons[9] = {'id' : 10, 'name' : 'ATL-LAX'};
-    cons[10] = {'id' : 11, 'name' : 'AS3-AS4'};
+    //cons[0] = {'id' : 0, 'name' : 'LAX-SLC'};
+    //cons[1] = {'id' : 1, 'name' : 'LAX-IAH'};
+    cons[0] = {'id' : 2, 'name' : 'LAX-AS3'};
+    //cons[3] = {'id' : 3, 'name' : 'SLC-CHI'};
+    cons[1] = {'id' : 1, 'name' : 'CHI-AS2'};
+    //cons[5] = {'id' : 5, 'name' : 'CHI-NYC'};
+    //cons[6] = {'id' : 6, 'name' : 'CHI-IAH'};
+    //cons[7] = {'id' : 7, 'name' : 'AS2-NYC'};
+    cons[2] = {'id' : 3, 'name' : 'NYC-ATL'};
+    //cons[9] = {'id' : 9, 'name' : 'ATL-AS4'};
+    //cons[9] = {'id' : 10, 'name' : 'ATL-LAX'};
+    //cons[10] = {'id' : 11, 'name' : 'AS3-AS4'};
     return cons;
 }
 var cons = setConnections(); 
@@ -188,7 +188,19 @@ var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
 function flipLink(state, id) {
-    console.log(id + " is " + state);
+    var updown = "down";
+    if (state) {
+        updown = "up";
+    }
+    $.ajax({
+       url: "http://sdn1vpc.onlab.us:5003/link/" + id +"/" + updown,//data_source + '/flowtable/'+dpid,
+       dataType: 'json',
+       async: true,
+       success:  function (data) {
+             return;   
+       }
+    });
+   
 }
 
 function start_demo(data_source, tag, fl_tag) {
@@ -210,6 +222,7 @@ function start_demo(data_source, tag, fl_tag) {
     .append("input")
     .attr("checked", true)
     .attr("type", "checkbox")
+    .attr("size", "10px")
     .attr("id", function(d,i) { return d.id; })
     .on("click", function(d) {
             flipLink(!this.checked, d.id);
