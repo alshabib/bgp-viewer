@@ -112,20 +112,20 @@ function getFlows(data_source, tag, dpid) {
 
 function setRegularLayout(){
   var layout = {};
-  layout['SDNBGP1'] = [4/10, 2/10];
-  layout['SDNBGP2'] = [9/10, 1/10]; 
+  layout['SDNBGP1'] = [4/10, 1/10];
+  layout['SDNBGP2'] = [9/10, 1/5]; 
   layout['FloodLight-1'] = [4/10, 1/10];
   layout['FloodLight-2'] = [7/10, 1/10];
-  layout['00:00:00:00:00:00:00:a1'] = [1/4, 1/2];
-  layout['00:00:00:00:00:00:00:a2'] = [1/8, 3/4];
-  layout['00:00:00:00:00:00:00:a3'] = [2/3, 0.45];
-  layout['00:00:00:00:00:00:00:a4'] = [.55, .85];
-  layout['00:00:00:00:00:00:00:a5'] = [.9, .5];
-  layout['00:00:00:00:00:00:00:a6'] = [.75, 3/4]; 
-  layout['AS2'] = [.78, 0.28];
-  layout['AS3'] = [0.05, 0.9];
-  layout['AS4'] = [.88, 0.9];
-  layout['host'] = [1/8, 1/2];  
+  layout['00:00:00:00:00:00:00:a1'] = [1/4, 5/10];
+  layout['00:00:00:00:00:00:00:a2'] = [3/32, 7/10];
+  layout['00:00:00:00:00:00:00:a3'] = [2/3, .46];
+  layout['00:00:00:00:00:00:00:a4'] = [.5, .9];
+  layout['00:00:00:00:00:00:00:a5'] = [.88, .6];
+  layout['00:00:00:00:00:00:00:a6'] = [.7, .8]; 
+  layout['AS2'] = [.78, 0.3];
+  layout['AS3'] = [0.05, 0.94];
+  layout['AS4'] = [.88, 0.94];
+  layout['host'] = [1/8, 5/10];  
 
   layout['00:00:00:00:00:00:00:b1'] = [9/10, 2/5];
   layout['00:00:00:00:00:00:00:b2'] = [9/10, 4/5];
@@ -159,18 +159,17 @@ var names = setSwitchNames();
 
 function setConnections() {
     var cons = new Array()
-    //cons[0] = {'id' : 0, 'name' : 'LAX-SLC'};
-    //cons[1] = {'id' : 1, 'name' : 'LAX-IAH'};
     cons[0] = {'id' : 2, 'name' : 'LAX-AS3'};
-    //cons[3] = {'id' : 3, 'name' : 'SLC-CHI'};
-    cons[1] = {'id' : 1, 'name' : 'CHI-AS2'};
-    //cons[5] = {'id' : 5, 'name' : 'CHI-NYC'};
-    //cons[6] = {'id' : 6, 'name' : 'CHI-IAH'};
-    //cons[7] = {'id' : 7, 'name' : 'AS2-NYC'};
-    cons[2] = {'id' : 3, 'name' : 'NYC-ATL'};
-    //cons[9] = {'id' : 9, 'name' : 'ATL-AS4'};
-    //cons[9] = {'id' : 10, 'name' : 'ATL-LAX'};
-    //cons[10] = {'id' : 11, 'name' : 'AS3-AS4'};
+    cons[1] = {'id' : 4, 'name' : 'LAX-SLC'};
+    cons[2] = {'id' : 3, 'name' : 'LAX-IAH'};
+    cons[3] = {'id' : 1, 'name' : 'CHI-AS2'};
+    cons[4] = {'id' : 5, 'name' : 'CHI-NYC'};
+    cons[5] = {'id' : 6, 'name' : 'CHI-IAH'};
+    cons[6] = {'id' : 7, 'name' : 'AS2-NYC'};
+    cons[7] = {'id' : 3, 'name' : 'NYC-ATL'};
+    cons[8] = {'id' : 9, 'name' : 'ATL-AS4'};
+    cons[9] = {'id' : 10, 'name' : 'ATL-LAX'};
+    cons[10] = {'id' : 11, 'name' : 'AS3-AS4'};
     return cons;
 }
 var cons = setConnections(); 
@@ -206,11 +205,11 @@ function flipLink(state, id) {
 function start_demo(data_source, tag, fl_tag) {
 
 
-    var h = 650, w = 900;//window.innerHeight - 150, w = window.innerWidth - 100;        
+    var h = 1000, w = 2000;//window.innerHeight - 150, w = window.innerWidth - 100;        
     var image_size = 100;
     var fill = d3.scale.category10();
     var pfill = d3.scale.category20();
-    var bgmap = { 'background-repeat' : 'no-repeat', 'background-attachment': 'fixed', 'background-position':'15% 27%', 'background-image' : 'url(images/usa.png)', 'background-size' : '900px 650px' }; 
+    var bgmap = { 'background-repeat' : 'no-repeat', 'background-attachment': 'fixed', 'background-position':'65% 27%', 'background-image' : 'url(images/usa.png)', 'background-size' : '88% 100%' }; 
 
 
     d3.select('#controllerList').selectAll('p')
@@ -237,7 +236,7 @@ function start_demo(data_source, tag, fl_tag) {
 //  .append("svg:g")
 //    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-    var timer;
+  //  var timer;
 
     /*var bgproute = d3.select('#bgproutes')
         .append('a').attr("xlink:href", "#").attr("id", "routes").attr("title", "None")
@@ -245,7 +244,7 @@ function start_demo(data_source, tag, fl_tag) {
 
     //setTipsy('#routes', data_source);
     //$('#routes').tipsy({trigger:'manual',gravity:'w', html:true, title: getRoutes(data_source)});
-    
+    /*
     $('#routes').tipsy({gravity:$.fn.tipsy.autoNS, html:true, fade:true, title: function() {
         return getRoutes(data_source);    
     }  }); 
@@ -262,7 +261,7 @@ function start_demo(data_source, tag, fl_tag) {
     $('.tipsy').live('mouseout',function(e){
         $('#routes').tipsy('hide');
         clearTimeout(timer);
-    });
+    });*/
 
 
     var svg = d3.select(tag).append("svg:svg")
@@ -275,7 +274,7 @@ function start_demo(data_source, tag, fl_tag) {
 
       //var bgp_nodes = [ { "name" : "SDNBGP1", "group" : "0" }, { "name" : "SDNBGP2", "group" : "1" }, { "name" : "FloodLight-1", "group" : "0" }, { "name" : "FloodLight-2", "group" : "1" } ];
 
-      var bgp_nodes = [ ]//{ "name" : "SDNBGP1", "group" : "0" } ]//, { "name" : "FloodLight-1", "group" : "0" } ]
+      var bgp_nodes = [{ "name" : "SDNBGP1", "group" : "0" } ]//, { "name" : "FloodLight-1", "group" : "0" } ]
 
       //var nodes = json.nodes.map(Object);
       //var links = json.links.map(Object);
@@ -361,61 +360,60 @@ function start_demo(data_source, tag, fl_tag) {
           .attr("id", function(d){return d.id;});*/
 
     svg.append('text').text('SDN AS - AS1')
-                        .attr('x', 0.4*w)
-                        .attr('y', 0.7*h)
-                        .style('font-size','22px');
+                        .attr('x', 0.5*w)
+                        .attr('y', 0.6*h)
+                        //.attr('color', '#000000');
+                        .attr('class', 'citylabel');
 
      svg.append('text').text('SLC')
                         .attr('x', 0.25*w)
-                        .attr('y', 0.45*h)
-                        .style('font-size','22px');
-
+                        .attr('y', 0.46*h)
+                        .attr('class', 'citylabel')
     
       svg.append('text').text('LAX')
-                        .attr('x', 0.04*w)
-                        .attr('y', 0.75*h)
-                        .style('font-size','22px');
-
+                        .attr('x', 0.1*w)
+                        .attr('y', 0.66*h)
+                        .attr('class', 'citylabel')
 
       svg.append('text').text('CHI')
                         .attr('x', 0.66*w)
-                        .attr('y', 0.40*h)
-                        .style('font-size','22px');
+                        .attr('y', 0.4*h)
+                        .attr('class', 'citylabel')
+
 
       svg.append('text').text('IAH')
                         .attr('x', 0.5*w)
-                        .attr('y', 0.8*h)
-                        .style('font-size','22px');
+                        .attr('y', 0.86*h)
+                        .attr('class', 'citylabel')
 
     
    svg.append('text').text('NYC')
-                        .attr('x', 0.8*w)
-                        .attr('y', 0.55*h)
-                        .style('font-size','22px');
+                        .attr('x', 0.88*w)
+                        .attr('y', 0.54*h)
+                        .attr('class', 'citylabel')
 
 
     svg.append('text').text('ATL')
-                        .attr('x', 0.72*w)
-                        .attr('y', 0.8*h)
-                        .style('font-size','22px');
-
+                        .attr('x', 0.7*w)
+                        .attr('y', 0.74*h)
+                        .attr('class', 'citylabel')
 
 
    svg.append('text').text('AS2')
                         .attr('x', 0.78*w)
-                        .attr('y', 0.4*h)
-                        .style('font-size','22px');
-
+                        .attr('y', 0.26*h)
+                        .attr('class', 'citylabel')
 
    svg.append('text').text('AS3')
-                        .attr('x', 0.03*w)
-                        .attr('y', 0.87*h)
-                        .style('font-size','22px');
+                        .attr('x', 0.1*w)
+                        .attr('y', 0.84*h)
+                        .attr('class', 'citylabel')
 
    svg.append('text').text('AS4')
-                        .attr('x', 0.8*w)
-                        .attr('y', 0.95*h)
-                        .style('font-size','22px');
+                        .attr('x', 0.85*w)
+                        .attr('y', 0.84*h)
+                        .attr('class', 'citylabel')
+
 
     function im_size(d) {
         if (d.name.indexOf("AS") != -1) { 
@@ -454,7 +452,7 @@ function start_demo(data_source, tag, fl_tag) {
         .enter().append("svg:g")
           .attr("class", "node")
           .append("svg:image") 
-          .attr("xlink:href", function(d) {if (d.name.indexOf("FloodLight") != -1) { return "images/floodlight.png"; } else { return  "images/BGP-ICON.png";  }} )
+          .attr("xlink:href", function(d) {if (d.name.indexOf("FloodLight") != -1) { return "images/floodlight.png"; } else { return  "images/ONOS.png";  }} )
           .attr("width", function (d) { if (d.name.indexOf("FloodLight") != -1) { return 2*image_size + "px"; } else { return  3*image_size + "px";  }})
           .attr("height", 3*image_size + "px")
           .attr("x", function(d) { return (w * layout[d.name][0]) - image_size/2; } )
